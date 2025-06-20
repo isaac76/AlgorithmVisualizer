@@ -16,6 +16,16 @@ set(TEST_LIST_SOURCES
     tst_list.cpp
 )
 
+# Set class tests
+set(TEST_SET_SOURCES
+    tst_set.cpp
+)
+
+# Graph class tests
+set(TEST_GRAPH_SOURCES
+    tst_graph.cpp
+)
+
 # MainWindow tests
 set(TEST_MAINWINDOW_SOURCES
     tst_mainwindow.cpp
@@ -29,11 +39,21 @@ add_executable(tst_list ${TEST_LIST_SOURCES})
 target_link_libraries(tst_list PRIVATE Qt${QT_VERSION_MAJOR}::Test)
 add_test(NAME tst_list COMMAND tst_list)
 
+# Set test
+add_executable(tst_set ${TEST_SET_SOURCES})
+target_link_libraries(tst_set PRIVATE Qt${QT_VERSION_MAJOR}::Test)
+add_test(NAME tst_set COMMAND tst_set)
+
+# Graph test
+add_executable(tst_graph ${TEST_GRAPH_SOURCES})
+target_link_libraries(tst_graph PRIVATE Qt${QT_VERSION_MAJOR}::Test)
+add_test(NAME tst_graph COMMAND tst_graph)
+
 # First, create a library from the main project source files
 # so we can link against it in our tests
 add_library(algorithm_visualizer_lib STATIC
-    ${CMAKE_SOURCE_DIR}/mainwindow.cpp
-    ${CMAKE_SOURCE_DIR}/mainwindow.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mainwindow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../mainwindow.h
     # Add other source files needed by MainWindow here
 )
 target_link_libraries(algorithm_visualizer_lib PRIVATE
