@@ -68,6 +68,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         listnode.h listnode.cpp
         set.h set.cpp
         setnode.h setnode.cpp
+        adjacentlist.h adjacentlist.cpp
+        bfsvertex.h bfsvertex.cpp
+        queue.h queue.cpp
+        bfs.h bfs.cpp
     )
     
     # Include generated version.h

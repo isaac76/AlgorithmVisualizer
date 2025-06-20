@@ -103,7 +103,7 @@ public:
         this->h = h;
     }
 
-    ListNode<C>* head() {
+    ListNode<C>* head() const {
         return this->h;
     }
 
@@ -111,7 +111,7 @@ public:
         this->t = t;
     }
     
-    ListNode<C>* tail() {
+    ListNode<C>* tail() const {
         return this->t;
     }
     // Note: takeOwnership, releaseOwnership, and hasOwnership methods
