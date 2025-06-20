@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# This file contains project-specific settings for Qt Creator
+# Qt Creator doesn't use this file directly, but you can follow these instructions
+
+# Instructions for Qt Creator setup:
+# 1. Open project in Qt Creator by selecting the CMakeLists.txt file
+# 2. In Projects mode, under Build Settings:
+#    a. Set the build directory to: /home/isaac/src/git/AlgorithmVisualizer/build
+#    b. Add the following to CMake Configuration arguments: -DCMAKE_CXX_STANDARD=17
+#    c. Under Build Steps, expand Details and ensure "Enable C++11" or higher is selected
+# 3. Under Run Settings:
+#    a. Set the working directory to: /home/isaac/src/git/AlgorithmVisualizer
+# 4. For linking against the filesystem library:
+#    a. Add -lstdc++fs to the linker flags in the project settings
+
+# Note: This is not an actual configuration file used by Qt Creator,
+# but a reference for manual configuration steps in the Qt Creator UI.
