@@ -105,6 +105,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Contact
 
-[Your Name] - [your.email@example.com]
-
-Project Link: [https://github.com/yourusername/AlgorithmVisualizer](https://github.com/yourusername/AlgorithmVisualizer)
+Project Link: [https://github.com/isaac76/AlgorithmVisualizer](https://github.com/isaac76/AlgorithmVisualizer)
