@@ -8,9 +8,15 @@ template<class C, class Compare = std::equal_to<C>> class AdjacentList
 public:
     C* vertex;
     Set<C, Compare> adjacent;
-
+    
+    // Default constructor
+    AdjacentList() : vertex(nullptr), adjacent() {
+        
+    }
+    
+    // Constructor with Compare object
     AdjacentList(const Compare& comp) : vertex(nullptr), adjacent(comp) {
-        this->vertex = nullptr;
+        
     }
     
     ~AdjacentList() {

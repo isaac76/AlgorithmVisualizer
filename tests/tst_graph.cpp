@@ -89,7 +89,7 @@ void TestGraph::cleanup()
 void TestGraph::testInsertVertex()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -116,7 +116,7 @@ void TestGraph::testInsertVertex()
 void TestGraph::testInsertEdge()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -146,7 +146,7 @@ void TestGraph::testInsertEdge()
 void TestGraph::testRemoveVertex()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -188,7 +188,7 @@ void TestGraph::testRemoveVertex()
 void TestGraph::testRemoveEdge()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -234,7 +234,7 @@ void TestGraph::testOwnership()
     // Use a separate scope to test automatic cleanup
     {
         // Create a graph
-        Graph<BfsVertex<TestData>> graph(compareTestData);
+        Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
 
         // Create vertices with graph taking ownership
         BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -254,7 +254,7 @@ void TestGraph::testOwnership()
     // This test passes if there's no crash or memory leak
 
     // Test without ownership
-    Graph<BfsVertex<TestData>> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
 
     // Create vertex without graph taking ownership
     BfsVertex<TestData> *v3 = new BfsVertex<TestData>(new TestData(3));
@@ -268,7 +268,7 @@ void TestGraph::testOwnership()
 void TestGraph::testBFS()
 {
     // Create a graph for BFS testing
-    Graph<BfsVertex<std::string>> graph(compareStrings);
+    Graph<BfsVertex<std::string>, CompareTestData> graph(compareStrings);
 
     // Create vertices
     BfsVertex<std::string> *a = new BfsVertex<std::string>(new std::string("A"));

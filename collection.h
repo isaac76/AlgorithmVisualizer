@@ -43,6 +43,29 @@ public:
     }
     
     /**
+     * @brief Constructor with Compare functor
+     * @param comp Compare functor for elements
+     */
+    Collection(const Compare& comp) {
+        this->match = nullptr;
+        this->size = 0;
+        this->ownedHead = nullptr;
+        this->equalTo = comp;
+    }
+    
+    /**
+     * @brief Constructor with both match function and Compare functor
+     * @param match Function pointer for comparing elements
+     * @param comp Compare functor for elements
+     */
+    Collection(int (*match)(const C* key1, const C* key2), const Compare& comp) {
+        this->match = match;
+        this->size = 0;
+        this->ownedHead = nullptr;
+        this->equalTo = comp;
+    }
+    
+    /**
      * @brief Virtual destructor to ensure proper cleanup in derived classes
      */
     virtual ~Collection() {

@@ -9,7 +9,7 @@
 #include "collection.h"
 
 template <class C, class Compare = std::equal_to<C>>
-class Set : public Collection<C>
+class Set : public Collection<C, Compare>
 {
 private:
     SetNode<C> *h; // Head pointer
@@ -17,7 +17,7 @@ private:
 
 public:
     // Constructors and destructor
-    Set() : Collection<C>()
+    Set() : Collection<C, Compare>()
     {
         this->h = nullptr;
         this->t = nullptr;
@@ -29,7 +29,7 @@ public:
         this->t = nullptr;
     }
 
-    Set(int (*match)(const C *key1, const C *key2)) : Collection<C>(match)
+    Set(int (*match)(const C *key1, const C *key2)) : Collection<C, Compare>(match)
     {
         this->h = nullptr;
         this->t = nullptr;
