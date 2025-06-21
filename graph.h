@@ -7,7 +7,7 @@
 #include "bfsvertex.h"
 #include "collection.h"
 
-template <class C> class Graph : public Collection<C>
+template <class C, class Compare = std::equal_to<C>> class Graph : public Collection<C, Compare>
 {
 private:
     int vcount;
@@ -17,6 +17,12 @@ protected:
     List<AdjacentList<C>> adjacentLists;
 public:
     Graph(int (*match)(const void* key1, const void* key2)) : Collection<C>() {
+        this->vcount = 0;
+        this->ecount = 0;
+        this->match = reinterpret_cast<int (*)(C*, C*)>(match);
+    }
+
+    Graph(int (*match)(const void* key1, const void* key2), const Compare &comp) : Collection<C>(match, comp) {
         this->vcount = 0;
         this->ecount = 0;
         this->match = reinterpret_cast<int (*)(C*, C*)>(match);
@@ -34,7 +40,7 @@ public:
 
     int insertVertex(C* data, bool takeOwnership = false) {
         ListNode<AdjacentList<C>>* node;
-        AdjacentList<C>* adjList = new AdjacentList<C>();
+        AdjacentList<C, Compare>* adjList = new AdjacentList<C, Compare>();
 
         // Check if the vertex already exists
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {

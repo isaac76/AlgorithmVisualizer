@@ -3,13 +3,13 @@
 
 #include "set.h"
 
-template<class C> class AdjacentList
+template<class C, class Compare = std::equal_to<C>> class AdjacentList
 {
 public:
     C* vertex;
-    Set<C> adjacent;
+    Set<C, Compare> adjacent;
 
-    AdjacentList() {
+    AdjacentList(const Compare& comp) : vertex(nullptr), adjacent(comp) {
         this->vertex = nullptr;
     }
     
