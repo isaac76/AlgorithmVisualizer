@@ -23,6 +23,7 @@ private slots:
     void testDifference();
     void testSubset();
     void testEqualSet();
+    void testCustomSetFunctors();
 };
 
 // Simple test data class
@@ -44,6 +45,70 @@ struct CompareTestData
     bool operator()(const TestData &v1, const TestData &v2) const
     {
         return v1.value == v2.value;
+    }
+};
+
+// Complex record class for functor testing
+class Record
+{
+public:
+    int id;
+    std::string name;
+    double score;
+
+    Record(int i = 0, const std::string &n = "", double s = 0.0)
+        : id(i), name(n), score(s) {}
+
+    bool operator==(const Record &other) const
+    {
+        // Default equality checks all fields
+        return id == other.id && name == other.name && std::abs(score - other.score) < 0.001;
+    }
+};
+
+// Functor that only compares by ID
+struct CompareRecordById
+{
+    bool operator()(const Record &rec1, const Record &rec2) const
+    {
+        return rec1.id == rec2.id;
+    }
+};
+
+// Functor that compares records based on partial name match
+struct CompareRecordByPartialName
+{
+    bool operator()(const Record &rec1, const Record &rec2) const
+    {
+        // If either name is empty, they can't match
+        if (rec1.name.empty() || rec2.name.empty())
+            return false;
+
+        // Check if rec1's name contains rec2's name or vice versa
+        return rec1.name.find(rec2.name) != std::string::npos ||
+               rec2.name.find(rec1.name) != std::string::npos;
+    }
+};
+
+// Functor that uses a custom score - consider records equal if scores are within a certain percentage
+struct CompareRecordByScorePercentage
+{
+    double percentage;
+
+    CompareRecordByScorePercentage(double pct = 10.0) : percentage(pct) {}
+
+    bool operator()(const Record &rec1, const Record &rec2) const
+    {
+        // If either score is 0, use absolute comparison to avoid division by 0
+        if (rec1.score == 0 || rec2.score == 0)
+            return std::abs(rec1.score - rec2.score) < 0.001;
+
+        // Calculate percentage difference
+        double diff = std::abs(rec1.score - rec2.score);
+        double avg = (rec1.score + rec2.score) / 2.0;
+        double pctDiff = (diff / avg) * 100.0;
+
+        return pctDiff <= percentage;
     }
 };
 
@@ -616,6 +681,162 @@ void TestSet::testEqualSet()
 
     // Should still be equal
     QVERIFY(TestDataSet::isEqualSet(&set1, &set4));
+}
+
+void TestSet::testCustomSetFunctors()
+{
+    // 1. Test ID-based comparison
+    {
+        Set<Record, CompareRecordById> idSet;
+
+        // Create records with same ID but different other fields
+        Record *r1 = new Record(1, "First Record", 95.5);
+        Record *r2 = new Record(1, "Different Name", 80.0); // Same ID
+        Record *r3 = new Record(2, "Second Record", 85.0);  // Different ID
+
+        // Insert first record
+        idSet.insert(r1, true);
+
+        // Try to insert record with same ID - should be considered duplicate
+        int sizeBefore = idSet.getSize();
+        idSet.insert(r2, true);
+        QCOMPARE(idSet.getSize(), sizeBefore); // Size shouldn't change if duplicate was rejected
+
+        // Insert record with different ID
+        sizeBefore = idSet.getSize();
+        idSet.insert(r3, true);
+        QCOMPARE(idSet.getSize(), sizeBefore + 1); // Size should increase
+
+        // Verify set size
+        QCOMPARE(idSet.getSize(), 2);
+
+        // Search using only ID field
+        Record searchKey(1, "", 0.0);  // Only ID matters
+        QVERIFY(idSet.isMember(&searchKey));
+
+        // Try removing with just ID match
+        bool removed = idSet.remove(&searchKey);
+        QVERIFY(removed);
+        QCOMPARE(idSet.getSize(), 1);
+
+        // Clean up
+        delete r2; // This one wasn't inserted
+    }
+
+    // 2. Test partial name match comparison
+    {
+        Set<Record, CompareRecordByPartialName> nameSet;
+
+        // Create records with overlapping names
+        Record *r1 = new Record(1, "Software Engineer", 100.0);
+        Record *r2 = new Record(2, "Engineer", 90.0);      // Partial match with r1
+        Record *r3 = new Record(3, "Product Manager", 95.0); // No match with others
+
+        // Insert first record
+        nameSet.insert(r1, true);
+
+        // Try to insert record with overlapping name - should be considered duplicate
+        int sizeBefore = nameSet.getSize();
+        nameSet.insert(r2, true);
+        QCOMPARE(nameSet.getSize(), sizeBefore); // Size shouldn't change if duplicate was rejected
+
+        // Insert record with different name
+        sizeBefore = nameSet.getSize();
+        nameSet.insert(r3, true);
+        QCOMPARE(nameSet.getSize(), sizeBefore + 1); // Size should increase
+
+        // Verify set size
+        QCOMPARE(nameSet.getSize(), 2);
+
+        // Search using partial name
+        Record searchKey(0, "Soft", 0.0);  // Partial match with "Software Engineer"
+        QVERIFY(nameSet.isMember(&searchKey));
+
+        // Try non-matching search
+        Record nonMatchKey(0, "Developer", 0.0);
+        QVERIFY(!nameSet.isMember(&nonMatchKey));
+
+        // Test set operations with custom comparator
+        Set<Record, CompareRecordByPartialName> otherSet;
+        otherSet.insert(new Record(5, "Software Architect", 110.0), true); // Should match "Software Engineer"
+        otherSet.insert(new Record(6, "Data Analyst", 85.0), true);       // No match
+
+        // Test intersection - should find the overlapping "Software" terms
+        Set<Record, CompareRecordByPartialName> intersectionSet;
+        Set<Record, CompareRecordByPartialName>::intersectionSet(&intersectionSet, &nameSet, &otherSet);
+        QCOMPARE(intersectionSet.getSize(), 1);
+
+        // Clean up
+        delete r2; // This one wasn't inserted
+    }
+
+    // 3. Test score percentage comparison
+    {
+        // Use 5% threshold
+        Set<Record, CompareRecordByScorePercentage> scoreSet;
+
+        // Create records with similar scores
+        Record *r1 = new Record(1, "First", 100.0);
+        Record *r2 = new Record(2, "Second", 104.0);  // Within 5% of r1
+        Record *r3 = new Record(3, "Third", 110.0);   // Outside 5% of r1
+
+        // Insert first record
+        scoreSet.insert(r1, true);
+
+        // Try to insert record with score within threshold - should be considered duplicate
+        int sizeBefore = scoreSet.getSize();
+        scoreSet.insert(r2, true);
+        QCOMPARE(scoreSet.getSize(), sizeBefore); // Size shouldn't change if duplicate was rejected
+
+        // Insert record with score outside threshold
+        sizeBefore = scoreSet.getSize();
+        scoreSet.insert(r3, true);
+        QCOMPARE(scoreSet.getSize(), sizeBefore + 1); // Size should increase
+
+        // Verify set size
+        QCOMPARE(scoreSet.getSize(), 2);
+
+        // Search using score within threshold
+        Record searchKey(0, "", 102.0);  // Within 5% of 100.0
+        QVERIFY(scoreSet.isMember(&searchKey));
+
+        // Clean up
+        delete r2; // This one wasn't inserted
+    }
+
+    // 4. Test composite membership checks
+    {
+        // Create different sets with different comparison criteria
+        Set<Record, CompareRecordById> idSet;
+        Set<Record, CompareRecordByPartialName> nameSet;
+
+        Record *r1 = new Record(1, "Developer", 90.0);
+        Record *r2 = new Record(2, "Engineer", 95.0);
+        Record *r3 = new Record(3, "Software Developer", 100.0);
+
+        // Insert into ID set
+        idSet.insert(r1, false);
+        idSet.insert(r2, false);
+
+        // Insert into name set
+        nameSet.insert(r1, false);
+        nameSet.insert(r3, false);
+
+        // Test composite membership check (ID OR name match)
+        Record testRec(2, "Software", 0.0);
+        bool isMatch = idSet.isMember(&testRec) || nameSet.isMember(&testRec);
+        QVERIFY(isMatch); // Should match by ID in idSet
+
+        // Test another composite check
+        Record testRec2(4, "Engineer", 0.0);
+        isMatch = idSet.isMember(&testRec2) || nameSet.isMember(&testRec2);
+        QVERIFY(isMatch); // Should match by name in nameSet
+
+        // Clean up
+        delete r1;
+        delete r2;
+        delete r3;
+    }
 }
 
 QTEST_APPLESS_MAIN(TestSet)
