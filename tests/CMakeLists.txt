@@ -26,6 +26,11 @@ set(TEST_GRAPH_SOURCES
     tst_graph.cpp
 )
 
+# Graph Functor tests
+set(TEST_GRAPH_FUNCTOR_SOURCES
+    tst_graph_functors.cpp
+)
+
 # MainWindow tests
 set(TEST_MAINWINDOW_SOURCES
     tst_mainwindow.cpp
@@ -48,6 +53,12 @@ add_test(NAME tst_set COMMAND tst_set)
 add_executable(tst_graph ${TEST_GRAPH_SOURCES})
 target_link_libraries(tst_graph PRIVATE Qt${QT_VERSION_MAJOR}::Test)
 add_test(NAME tst_graph COMMAND tst_graph)
+
+# Graph Functors
+add_executable(tst_graph_functors ${TEST_GRAPH_FUNCTOR_SOURCES})
+target_link_libraries(tst_graph_functors PRIVATE Qt${QT_VERSION_MAJOR}::Test)
+add_test(NAME tst_graph_functors COMMAND tst_graph_functors)
+
 
 # First, create a library from the main project source files
 # so we can link against it in our tests
