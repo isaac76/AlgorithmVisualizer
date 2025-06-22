@@ -29,19 +29,6 @@ public:
         this->t = nullptr;
     }
 
-    Set(int (*match)(const C *key1, const C *key2)) : Collection<C, Compare>(match)
-    {
-        this->h = nullptr;
-        this->t = nullptr;
-    }
-
-    Set(int (*match)(const C *key1, const C *key2), const Compare &comp)
-        : Collection<C, Compare>(match, comp)
-    {
-        this->h = nullptr;
-        this->t = nullptr;
-    }
-
     ~Set() override
     {
         SetNode<C> *current = this->h;
@@ -97,25 +84,13 @@ public:
 
         for (current = this->head(); current != nullptr; current = current->next())
         {
-            // Use equalTo (functor) only if both pointers are valid
             if (data != nullptr && current->data() != nullptr) {
                 if (this->equalTo(*data, *(current->data()))) {
-                    qDebug() << "Set::isMember: Found matching element using equalTo comparison.";
-                    return true;
-                }
-            }
-
-            // Fall back to match function if provided
-            if (this->match != nullptr)
-            {
-                if (this->match(data, current->data()))
-                {
                     return true;
                 }
             }
             else
             {
-                // If no match function provided, use direct pointer comparison
                 if (data == current->data())
                 {
                     return true;
@@ -168,9 +143,7 @@ public:
         // Find the node containing data
         for (current = this->h; current != nullptr; current = current->next())
         {
-            if ((this->match != nullptr && this->match(data, current->data())) ||
-                (this->match == nullptr && data == current->data()))
-            {
+            if (this->equalTo(*data, *(current->data()))) {
                 break;
             }
             previous = current;

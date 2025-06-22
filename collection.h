@@ -19,7 +19,6 @@ template<class C, class Compare = std::equal_to<C>> class Collection
 protected:
     OwnedDataNode<C>* ownedHead;  // Head of the ownership tracking list
     int size;                     // Number of elements in the collection
-    int (*match)(const C* key1, const C* key2);  // Comparison function for elements
     Compare equalTo;
     
 public:
@@ -27,17 +26,6 @@ public:
      * @brief Default constructor
      */
     Collection() {
-        this->match = nullptr;
-        this->size = 0;
-        this->ownedHead = nullptr;
-    }
-    
-    /**
-     * @brief Constructor with match function
-     * @param match Function pointer for comparing elements
-     */
-    Collection(int (*match)(const C* key1, const C* key2)) {
-        this->match = match;
         this->size = 0;
         this->ownedHead = nullptr;
     }
@@ -47,19 +35,6 @@ public:
      * @param comp Compare functor for elements
      */
     Collection(const Compare& comp) {
-        this->match = nullptr;
-        this->size = 0;
-        this->ownedHead = nullptr;
-        this->equalTo = comp;
-    }
-    
-    /**
-     * @brief Constructor with both match function and Compare functor
-     * @param match Function pointer for comparing elements
-     * @param comp Compare functor for elements
-     */
-    Collection(int (*match)(const C* key1, const C* key2), const Compare& comp) {
-        this->match = match;
         this->size = 0;
         this->ownedHead = nullptr;
         this->equalTo = comp;

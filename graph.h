@@ -12,29 +12,19 @@ template <class C, class Compare = std::equal_to<C>> class Graph : public Collec
 private:
     int vcount;
     int ecount;
-    int (*match)(C* key1, C* key2);
 protected:
     List<AdjacentList<C, Compare>> adjacentLists;
 public:
-    Graph(int (*match)(const void* key1, const void* key2)) : Collection<C, Compare>() {
+    Graph() : Collection<C, Compare>() {
         this->vcount = 0;
         this->ecount = 0;
-        this->match = reinterpret_cast<int (*)(C*, C*)>(match);
     }
 
-    Graph(int (*match)(const void* key1, const void* key2), const Compare &comp) : Collection<C, Compare>(match, comp) {
+    Graph(const Compare &comp) : Collection<C, Compare>(comp) {
         this->vcount = 0;
         this->ecount = 0;
-        this->match = reinterpret_cast<int (*)(C*, C*)>(match);
     }
     
-    // Constructor that only takes a Compare object
-    Graph(const Compare &comp = Compare()) : Collection<C, Compare>(comp) {
-        this->vcount = 0;
-        this->ecount = 0;
-        this->match = nullptr;
-    }
-
     ~Graph() override {
         AdjacentList<C, Compare>* adjList;
         while(this->adjacentLists.getSize() > 0) {
@@ -56,12 +46,6 @@ public:
                     qDebug() << "Graph::insertVertex: Vertex already exists using equalTo comparison.";
                     return 1;
                 }
-            }
-
-            // fallback?
-            if (this->match(data, node->data()->vertex)) {
-                delete adjList; // Clean up since we won't use it
-                return 1;
             }
         }
         
@@ -91,11 +75,6 @@ public:
                     break;
                 }
             }
-
-            // fallback?
-            if (this->match(data2, node->data()->vertex)) {
-                break;
-            }
         }
 
         if (node == nullptr) {
@@ -109,9 +88,6 @@ public:
                     qDebug() << "Graph::insertEdge: Source vertex already exists using equalTo comparison.";
                     break;
                 }
-            }
-            if (this->match(data1, node->data()->vertex)) {
-                break;
             }
         }
 
@@ -152,12 +128,6 @@ public:
                     found = true;
                     break;
                 }
-            }
-
-            // fallback?
-            if (this->match(vertexToRemove, current->data()->vertex)) {
-                found = true;
-                break;
             }
             prev = current;
         }
@@ -209,11 +179,6 @@ public:
                     break;
                 }
             }
-
-            // fallback?
-            if (this->match(data1, node->data()->vertex)) {
-                break;
-            }
         }
 
         if (node == nullptr) {
@@ -242,11 +207,6 @@ public:
                     break;
                 }
             }
-
-            // fallback?
-            if (this->match(data, node->data()->vertex)) {
-                break;
-            }
             prev = node;
         }
 
@@ -268,11 +228,6 @@ public:
                     qDebug() << "Graph::isAdjacentGraph: Vertex found using equalTo comparison.";
                     break;
                 }
-            }
-
-            // fallback?
-            if (this->match(data1, node->data()->vertex)) {
-                break;
             }
             prev = node;
         }
@@ -301,11 +256,6 @@ public:
                     qDebug() << "Graph::findNodeByVertex: Vertex found using equalTo comparison.";
                     return node;
                 }
-            }
-
-            // fallback?
-            if (this->match(data, node->data()->vertex)) {
-                return node;
             }
         }
         

@@ -4,18 +4,18 @@
 #include "listnode.h"
 #include "collection.h"
 
-template<class C> class List : public Collection<C>
+template<class C, class Compare = std::equal_to<C>> class List : public Collection<C, Compare>
 {
 private:
     ListNode<C>* h;  // Head pointer
     ListNode<C>* t;  // Tail pointer
 public:
-    List() : Collection<C>() {
+    List() : Collection<C, Compare>() {
         this->h = nullptr;
         this->t = nullptr;
     }
 
-    List(int (*match)(const C* key1, const C* key2)) : Collection<C>(match) {
+    List(const Compare &comp) : Collection<C, Compare>(comp) {
         this->h = nullptr;
         this->t = nullptr;
     }
