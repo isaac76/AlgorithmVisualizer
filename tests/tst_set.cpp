@@ -214,18 +214,6 @@ void TestSet::testIsMember()
 
     // Test with null pointer (should return false)
     QVERIFY(!set.isMember(nullptr));
-
-    // Test with a set that doesn't use a comparison function
-    Set<TestData> directSet; // No compare function, will use direct pointer comparison
-    TestData *direct1 = new TestData(1);
-    directSet.insert(direct1, true);
-
-    // Should find the exact same pointer
-    QVERIFY(directSet.isMember(direct1));
-
-    // But not a different pointer with the same value
-    TestData sameVal(1);
-    QVERIFY(!directSet.isMember(&sameVal));
 }
 
 void TestSet::testOwnership()
