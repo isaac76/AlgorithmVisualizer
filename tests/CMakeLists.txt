@@ -53,13 +53,13 @@ add_test(NAME tst_graph COMMAND tst_graph)
 # so we can link against it in our tests
 add_library(algorithm_visualizer_lib STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../mainwindow.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../mainwindow.h
-    # Add other source files needed by MainWindow here
+    ${CMAKE_CURRENT_SOURCE_DIR}/../circle.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../shape.cpp
 )
 target_link_libraries(algorithm_visualizer_lib PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
 )
-target_include_directories(algorithm_visualizer_lib PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(algorithm_visualizer_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/..)
 set_target_properties(algorithm_visualizer_lib PROPERTIES AUTOMOC ON)
 
 # MainWindow test

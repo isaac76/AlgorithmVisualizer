@@ -97,13 +97,15 @@ public:
 
         for (current = this->head(); current != nullptr; current = current->next())
         {
-            /*
-            if (this->equalTo(data, current->data())) {
-                qDebug() << "Set::isMember: Found matching element using equalTo comparison.";
+            // Use equalTo (functor) only if both pointers are valid
+            if (data != nullptr && current->data() != nullptr) {
+                if (this->equalTo(*data, *(current->data()))) {
+                    qDebug() << "Set::isMember: Found matching element using equalTo comparison.";
+                    return true;
+                }
             }
-            */
 
-
+            // Fall back to match function if provided
             if (this->match != nullptr)
             {
                 if (this->match(data, current->data()))

@@ -51,13 +51,9 @@ int compareTestData(const TestData *v1, const TestData *v2)
 
 struct CompareTestData
 {
-    bool operator()(const TestData *v1, const TestData *v2) const
+    bool operator()(const TestData &v1, const TestData &v2) const
     {
-        if (v1 == nullptr || v2 == nullptr)
-        {
-            return false;
-        }
-        return v1->value == v2->value;
+        return v1.value == v2.value;
     }
 };
 

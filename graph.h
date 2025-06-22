@@ -51,6 +51,14 @@ public:
 
         // Check if the vertex already exists
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data, *(node->data()->vertex))) {
+                    qDebug() << "Graph::insertVertex: Vertex already exists using equalTo comparison.";
+                    return 1;
+                }
+            }
+
+            // fallback?
             if (this->match(data, node->data()->vertex)) {
                 delete adjList; // Clean up since we won't use it
                 return 1;
@@ -77,6 +85,14 @@ public:
 
         // Find destination vertex
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data2 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data2, *(node->data()->vertex))) {
+                    qDebug() << "Graph::insertEdge: Destination vertex already exists using equalTo comparison.";
+                    break;
+                }
+            }
+
+            // fallback?
             if (this->match(data2, node->data()->vertex)) {
                 break;
             }
@@ -88,6 +104,12 @@ public:
 
         // Find source vertex
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data1 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data1, *(node->data()->vertex))) {
+                    qDebug() << "Graph::insertEdge: Source vertex already exists using equalTo comparison.";
+                    break;
+                }
+            }
             if (this->match(data1, node->data()->vertex)) {
                 break;
             }
@@ -124,6 +146,15 @@ public:
 
         // Find the vertex to remove
         for (current = this->adjacentLists.head(); current != nullptr; current = current->next()) {
+            if (vertexToRemove != nullptr && current->data() != nullptr) {
+                if (this->equalTo(*vertexToRemove, *(current->data()->vertex))) {
+                    qDebug() << "Graph::removeVertex: Vertex found using equalTo comparison.";
+                    found = true;
+                    break;
+                }
+            }
+
+            // fallback?
             if (this->match(vertexToRemove, current->data()->vertex)) {
                 found = true;
                 break;
@@ -172,6 +203,14 @@ public:
 
         // Find the source vertex
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data1 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data1, *(node->data()->vertex))) {
+                    qDebug() << "Graph::removeEdge: Source vertex already exists using equalTo comparison.";
+                    break;
+                }
+            }
+
+            // fallback?
             if (this->match(data1, node->data()->vertex)) {
                 break;
             }
@@ -197,6 +236,14 @@ public:
         ListNode<AdjacentList<C, Compare>>* prev = nullptr;
 
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data, *(node->data()->vertex))) {
+                    qDebug() << "Graph::buildAdjacentList: Vertex found using equalTo comparison.";
+                    break;
+                }
+            }
+
+            // fallback?
             if (this->match(data, node->data()->vertex)) {
                 break;
             }
@@ -216,6 +263,14 @@ public:
         ListNode<AdjacentList<C, Compare>>* prev = nullptr;
 
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data1 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data1, *(node->data()->vertex))) {
+                    qDebug() << "Graph::isAdjacentGraph: Vertex found using equalTo comparison.";
+                    break;
+                }
+            }
+
+            // fallback?
             if (this->match(data1, node->data()->vertex)) {
                 break;
             }
@@ -241,6 +296,14 @@ public:
         ListNode<AdjacentList<C, Compare>>* node;
         
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
+            if (data != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data, *(node->data()->vertex))) {
+                    qDebug() << "Graph::findNodeByVertex: Vertex found using equalTo comparison.";
+                    return node;
+                }
+            }
+
+            // fallback?
             if (this->match(data, node->data()->vertex)) {
                 return node;
             }

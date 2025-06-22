@@ -52,17 +52,34 @@ int compareTestData(const void *key1, const void *key2)
 
 struct CompareTestData
 {
-    bool operator()(const void *key1, const void *key2) const
+    bool operator()(const BfsVertex<TestData> &key1, const BfsVertex<TestData> &key2) const
     {
-        auto v1 = static_cast<const BfsVertex<TestData> *>(key1);
-        auto v2 = static_cast<const BfsVertex<TestData> *>(key2);
-        if (!v1 || !v2 || !v1->data || !v2->data)
+        // Check for null data pointers first
+        if (key1.data == nullptr || key2.data == nullptr)
         {
-            return false;
+            return false; // Not equal if any data is null
         }
-        return v1->data->value == v2->data->value;
+        
+        // Compare the values inside TestData
+        return key1.data->value == key2.data->value;
     }
 };
+
+struct CompareTestString
+{
+    bool operator()(const BfsVertex<std::string> &key1, const BfsVertex<std::string> &key2) const
+    {
+        // Check for null data pointers first
+        if (key1.data == nullptr || key2.data == nullptr)
+        {
+            return false; // Not equal if any data is null
+        }
+        
+        // Compare the string values (not the pointers)
+        return *key1.data == *key2.data;
+    }
+};
+
 
 // Comparison function for string vertices
 int compareStrings(const void *key1, const void *key2)
@@ -268,7 +285,7 @@ void TestGraph::testOwnership()
 void TestGraph::testBFS()
 {
     // Create a graph for BFS testing
-    Graph<BfsVertex<std::string>, CompareTestData> graph(compareStrings);
+    Graph<BfsVertex<std::string>, CompareTestString> graph(compareStrings);
 
     // Create vertices
     BfsVertex<std::string> *a = new BfsVertex<std::string>(new std::string("A"));
