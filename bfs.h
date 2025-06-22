@@ -8,20 +8,20 @@
 #include "bfsvertex.h"
 #include "set.h"
 
-template<typename T> int bfs(Graph<BfsVertex<T>>* graph, BfsVertex<T>* start, List<BfsVertex<T>>* hops) {
+template<typename T, typename Compare = std::equal_to<T>> int bfs(Graph<BfsVertex<T>, Compare>* graph, BfsVertex<T>* start, List<BfsVertex<T>>* hops) {
     if (!graph || !start) {
         return -1; // Invalid parameters
     }
 
-    Queue<AdjacentList<BfsVertex<T>>> queue;
+    Queue<AdjacentList<BfsVertex<T>, Compare>> queue;
 
-    AdjacentList<BfsVertex<T>>* adjList = nullptr;
-    AdjacentList<BfsVertex<T>>* clrAdjList;
+    AdjacentList<BfsVertex<T>, Compare>* adjList = nullptr;
+    AdjacentList<BfsVertex<T>, Compare>* clrAdjList;
 
     BfsVertex<T>* clrVertex;
     BfsVertex<T>* adjVertex;
 
-    ListNode<AdjacentList<BfsVertex<T>>>* node;
+    ListNode<AdjacentList<BfsVertex<T>, Compare>>* node;
 
     // Initialize all vertices
     for (node = graph->getAdjacencyListHead(); node != nullptr; node = node->next()) {

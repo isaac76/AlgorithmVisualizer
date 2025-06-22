@@ -1,6 +1,7 @@
 #ifndef COLLECTION_H
 #define COLLECTION_H
 
+#include <functional>
 #include "owneddatanode.h"
 
 /**
@@ -13,32 +14,30 @@
  * that allows collection classes to take ownership of elements and ensure proper
  * cleanup when the collection is destroyed.
  */
-template<class C> class Collection
+template<class C, class Compare = std::equal_to<C>> class Collection
 {
 protected:
-    
     OwnedDataNode<C>* ownedHead;  // Head of the ownership tracking list
     int size;                     // Number of elements in the collection
-    int (*match)(const C* key1, const C* key2);  // Comparison function for elements
+    Compare equalTo;
     
 public:
     /**
      * @brief Default constructor
      */
     Collection() {
-        this->match = nullptr;
         this->size = 0;
         this->ownedHead = nullptr;
     }
     
     /**
-     * @brief Constructor with match function
-     * @param match Function pointer for comparing elements
+     * @brief Constructor with Compare functor
+     * @param comp Compare functor for elements
      */
-    Collection(int (*match)(const C* key1, const C* key2)) {
-        this->match = match;
+    Collection(const Compare& comp) {
         this->size = 0;
         this->ownedHead = nullptr;
+        this->equalTo = comp;
     }
     
     /**

@@ -7,23 +7,26 @@
 #include "bfsvertex.h"
 #include "collection.h"
 
-template <class C> class Graph : public Collection<C>
+template <class C, class Compare = std::equal_to<C>> class Graph : public Collection<C, Compare>
 {
 private:
     int vcount;
     int ecount;
-    int (*match)(C* key1, C* key2);
 protected:
-    List<AdjacentList<C>> adjacentLists;
+    List<AdjacentList<C, Compare>> adjacentLists;
 public:
-    Graph(int (*match)(const void* key1, const void* key2)) : Collection<C>() {
+    Graph() : Collection<C, Compare>() {
         this->vcount = 0;
         this->ecount = 0;
-        this->match = reinterpret_cast<int (*)(C*, C*)>(match);
     }
 
+    Graph(const Compare &comp) : Collection<C, Compare>(comp) {
+        this->vcount = 0;
+        this->ecount = 0;
+    }
+    
     ~Graph() override {
-        AdjacentList<C>* adjList;
+        AdjacentList<C, Compare>* adjList;
         while(this->adjacentLists.getSize() > 0) {
             this->adjacentLists.remove(nullptr, &adjList);
             // The vertex pointer in the adjacentList will be deleted by Collection if we own it
@@ -33,14 +36,15 @@ public:
     }
 
     int insertVertex(C* data, bool takeOwnership = false) {
-        ListNode<AdjacentList<C>>* node;
-        AdjacentList<C>* adjList = new AdjacentList<C>();
+        ListNode<AdjacentList<C, Compare>>* node;
+        AdjacentList<C, Compare>* adjList = new AdjacentList<C, Compare>();
 
         // Check if the vertex already exists
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data, node->data()->vertex)) {
-                delete adjList; // Clean up since we won't use it
-                return 1;
+            if (data != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data, *(node->data()->vertex))) {
+                    return 1;
+                }
             }
         }
         
@@ -60,12 +64,14 @@ public:
     }
 
     int insertEdge(C* data1, C* data2, bool takeOwnership = false) {
-        ListNode<AdjacentList<C>>* node;
+        ListNode<AdjacentList<C, Compare>>* node;
 
         // Find destination vertex
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data2, node->data()->vertex)) {
-                break;
+            if (data2 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data2, *(node->data()->vertex))) {
+                    break;
+                }
             }
         }
 
@@ -75,8 +81,10 @@ public:
 
         // Find source vertex
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data1, node->data()->vertex)) {
-                break;
+            if (data1 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data1, *(node->data()->vertex))) {
+                    break;
+                }
             }
         }
 
@@ -96,9 +104,9 @@ public:
             return -1; // Invalid input
         }
 
-        ListNode<AdjacentList<C>>* current = nullptr;
-        ListNode<AdjacentList<C>>* prev = nullptr;
-        AdjacentList<C>* adjList = nullptr;
+        ListNode<AdjacentList<C, Compare>>* current = nullptr;
+        ListNode<AdjacentList<C, Compare>>* prev = nullptr;
+        AdjacentList<C, Compare>* adjList = nullptr;
         C* vertexToRemove = *data;
         bool found = false;
 
@@ -111,9 +119,11 @@ public:
 
         // Find the vertex to remove
         for (current = this->adjacentLists.head(); current != nullptr; current = current->next()) {
-            if (this->match(vertexToRemove, current->data()->vertex)) {
-                found = true;
-                break;
+            if (vertexToRemove != nullptr && current->data() != nullptr) {
+                if (this->equalTo(*vertexToRemove, *(current->data()->vertex))) {
+                    found = true;
+                    break;
+                }
             }
             prev = current;
         }
@@ -155,12 +165,14 @@ public:
             return -1; // Invalid input
         }
 
-        ListNode<AdjacentList<C>>* node;
+        ListNode<AdjacentList<C, Compare>>* node;
 
         // Find the source vertex
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data1, node->data()->vertex)) {
-                break;
+            if (data1 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data1, *(node->data()->vertex))) {
+                    break;
+                }
             }
         }
 
@@ -179,13 +191,15 @@ public:
         }
     }
 
-    int buildAdjacentList(C* data, AdjacentList<C>** adjList) {
-        ListNode<AdjacentList<C>>* node;
-        ListNode<AdjacentList<C>>* prev = nullptr;
+    int buildAdjacentList(C* data, AdjacentList<C, Compare>** adjList) {
+        ListNode<AdjacentList<C, Compare>>* node;
+        ListNode<AdjacentList<C, Compare>>* prev = nullptr;
 
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data, node->data()->vertex)) {
-                break;
+            if (data != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data, *(node->data()->vertex))) {
+                    break;
+                }
             }
             prev = node;
         }
@@ -199,12 +213,14 @@ public:
     }
 
     bool isAdjacentGraph(C* data1, C* data2) {
-        ListNode<AdjacentList<C>>* node;
-        ListNode<AdjacentList<C>>* prev = nullptr;
+        ListNode<AdjacentList<C, Compare>>* node;
+        ListNode<AdjacentList<C, Compare>>* prev = nullptr;
 
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data1, node->data()->vertex)) {
-                break;
+            if (data1 != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data1, *(node->data()->vertex))) {
+                    break;
+                }
             }
             prev = node;
         }
@@ -224,12 +240,14 @@ public:
         return this->ecount;
     }
 
-    ListNode<AdjacentList<C>>* findNodeByVertex(C* data) {
-        ListNode<AdjacentList<C>>* node;
+    ListNode<AdjacentList<C, Compare>>* findNodeByVertex(C* data) {
+        ListNode<AdjacentList<C, Compare>>* node;
         
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
-            if (this->match(data, node->data()->vertex)) {
-                return node;
+            if (data != nullptr && node->data() != nullptr) {
+                if (this->equalTo(*data, *(node->data()->vertex))) {
+                    return node;
+                }
             }
         }
         
@@ -237,7 +255,7 @@ public:
     }
     
     // Getter for adjacentLists, returns the head node of the list
-    ListNode<AdjacentList<C>>* getAdjacencyListHead() const {
+    ListNode<AdjacentList<C, Compare>>* getAdjacencyListHead() const {
         return this->adjacentLists.head();
     }
     
