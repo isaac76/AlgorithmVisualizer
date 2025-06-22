@@ -39,16 +39,6 @@ public:
     }
 };
 
-// Comparison function for TestData - with the correct signature for Set's constructor
-int compareTestData(const TestData *v1, const TestData *v2)
-{
-    if (v1 == nullptr || v2 == nullptr)
-    {
-        return 0; // Not equal if any is null
-    }
-    return (v1->value == v2->value) ? 1 : 0;
-}
-
 struct CompareTestData
 {
     bool operator()(const TestData &v1, const TestData &v2) const
@@ -72,7 +62,7 @@ void TestSet::cleanup()
 void TestSet::testInsert()
 {
     // Create a set with our comparison function
-    Set<TestData, CompareTestData> set(compareTestData);
+    Set<TestData, CompareTestData> set;
 
     // Create some test data
     TestData *d1 = new TestData(1);
@@ -126,7 +116,7 @@ void TestSet::testInsert()
 void TestSet::testRemove()
 {
     // Create a set
-    Set<TestData, CompareTestData> set(compareTestData);
+    Set<TestData, CompareTestData> set;
 
     // Create some test data
     TestData *d1 = new TestData(1);
@@ -183,7 +173,7 @@ void TestSet::testRemove()
 void TestSet::testIsMember()
 {
     // Create a set
-    Set<TestData, CompareTestData> set(compareTestData);
+    Set<TestData, CompareTestData> set;
 
     // Create some test data
     TestData *d1 = new TestData(1);
@@ -220,7 +210,7 @@ void TestSet::testOwnership()
 {
     // Test 1: Verify set cleans up owned data when it goes out of scope
     {
-        Set<TestData, CompareTestData> set(compareTestData);
+        Set<TestData, CompareTestData> set;
 
         // Create data with the set taking ownership
         TestData *d1 = new TestData(1);
@@ -240,7 +230,7 @@ void TestSet::testOwnership()
 
     // Test 2: Mix of owned and non-owned data
     {
-        Set<TestData, CompareTestData> set(compareTestData);
+        Set<TestData, CompareTestData> set;
 
         // Create owned data
         TestData *owned = new TestData(10);
@@ -259,7 +249,7 @@ void TestSet::testOwnership()
     // Set will clean up owned data but not onStack (which will be cleaned automatically)
 
     // Test 3: Removing an owned element
-    Set<TestData, CompareTestData> set(compareTestData);
+    Set<TestData, CompareTestData> set;
     TestData *d3 = new TestData(3);
 
     // Insert with ownership
@@ -280,8 +270,8 @@ void TestSet::testOwnership()
 void TestSet::testUnion()
 {
     // Create two sets
-    Set<TestData, CompareTestData> set1(compareTestData);
-    Set<TestData, CompareTestData> set2(compareTestData);
+    Set<TestData, CompareTestData> set1;
+    Set<TestData, CompareTestData> set2;
 
     // Create test data for set1
     TestData *d1 = new TestData(1);
@@ -303,7 +293,7 @@ void TestSet::testUnion()
     set2.insert(d5, true);
 
     // Create a result set
-    Set<TestData, CompareTestData> result(compareTestData);
+    Set<TestData, CompareTestData> result;
 
     // Perform the union operation
     Set<TestData, CompareTestData>::unionSet(&result, &set1, &set2);
@@ -321,16 +311,16 @@ void TestSet::testUnion()
     // Test some edge cases
 
     // Empty set union
-    Set<TestData, CompareTestData> empty1(compareTestData);
-    Set<TestData, CompareTestData> empty2(compareTestData);
-    Set<TestData, CompareTestData> emptyResult(compareTestData);
+    Set<TestData, CompareTestData> empty1;
+    Set<TestData, CompareTestData> empty2;
+    Set<TestData, CompareTestData> emptyResult;
 
     // Empty U Empty = Empty
     Set<TestData, CompareTestData>::unionSet(&emptyResult, &empty1, &empty2);
     QCOMPARE(emptyResult.getSize(), 0);
 
     // Set U Empty = Set
-    Set<TestData, CompareTestData> nonEmptyResult(compareTestData);
+    Set<TestData, CompareTestData> nonEmptyResult;
     Set<TestData, CompareTestData>::unionSet(&nonEmptyResult, &set1, &empty1);
 
     QCOMPARE(nonEmptyResult.getSize(), 3);
@@ -343,8 +333,8 @@ void TestSet::testUnion()
 void TestSet::testIntersection()
 {
     // Create two sets
-    Set<TestData, CompareTestData> set1(compareTestData);
-    Set<TestData, CompareTestData> set2(compareTestData);
+    Set<TestData, CompareTestData> set1;
+    Set<TestData, CompareTestData> set2;
 
     // Create test data for set1
     TestData *d1 = new TestData(1);
@@ -366,7 +356,7 @@ void TestSet::testIntersection()
     set2.insert(d4, true);
 
     // Create a result set
-    Set<TestData, CompareTestData> result(compareTestData);
+    Set<TestData, CompareTestData> result;
 
     // Perform the intersection operation
     Set<TestData, CompareTestData>::intersectionSet(&result, &set1, &set2);
@@ -388,22 +378,22 @@ void TestSet::testIntersection()
     // Test edge cases
 
     // Empty set intersection
-    Set<TestData, CompareTestData> empty1(compareTestData);
-    Set<TestData, CompareTestData> empty2(compareTestData);
-    Set<TestData, CompareTestData> emptyResult(compareTestData);
+    Set<TestData, CompareTestData> empty1;
+    Set<TestData, CompareTestData> empty2;
+    Set<TestData, CompareTestData> emptyResult;
 
     // Empty ∩ Empty = Empty
     Set<TestData, CompareTestData>::intersectionSet(&emptyResult, &empty1, &empty2);
     QCOMPARE(emptyResult.getSize(), 0);
 
     // Set ∩ Empty = Empty
-    Set<TestData, CompareTestData> nonEmptyResult(compareTestData);
+    Set<TestData, CompareTestData> nonEmptyResult;
     Set<TestData, CompareTestData>::intersectionSet(&nonEmptyResult, &set1, &empty1);
     QCOMPARE(nonEmptyResult.getSize(), 0);
 
     // Disjoint sets
-    Set<TestData, CompareTestData> disjointSet1(compareTestData);
-    Set<TestData, CompareTestData> disjointSet2(compareTestData);
+    Set<TestData, CompareTestData> disjointSet1;
+    Set<TestData, CompareTestData> disjointSet2;
 
     disjointSet1.insert(new TestData(100), true);
     disjointSet1.insert(new TestData(200), true);
@@ -411,7 +401,7 @@ void TestSet::testIntersection()
     disjointSet2.insert(new TestData(300), true);
     disjointSet2.insert(new TestData(400), true);
 
-    Set<TestData, CompareTestData> disjointResult(compareTestData);
+    Set<TestData, CompareTestData> disjointResult;
     Set<TestData, CompareTestData>::intersectionSet(&disjointResult, &disjointSet1, &disjointSet2);
 
     QCOMPARE(disjointResult.getSize(), 0); // Empty intersection
@@ -420,8 +410,8 @@ void TestSet::testIntersection()
 void TestSet::testDifference()
 {
     // Create two sets
-    Set<TestData, CompareTestData> set1(compareTestData);
-    Set<TestData, CompareTestData> set2(compareTestData);
+    Set<TestData, CompareTestData> set1;
+    Set<TestData, CompareTestData> set2;
 
     // Create test data for set1
     TestData *d1 = new TestData(1);
@@ -443,7 +433,7 @@ void TestSet::testDifference()
     set2.insert(d4, true);
 
     // Create a result set
-    Set<TestData, CompareTestData> result(compareTestData);
+    Set<TestData, CompareTestData> result;
 
     // Perform the difference operation (set1 - set2)
     Set<TestData, CompareTestData>::differenceSet(&result, &set1, &set2);
@@ -461,7 +451,7 @@ void TestSet::testDifference()
     QVERIFY(!result.isMember(&find4)); // Not in difference
 
     // Test the opposite difference (set2 - set1)
-    Set<TestData, CompareTestData> result2(compareTestData);
+    Set<TestData, CompareTestData> result2;
     Set<TestData, CompareTestData>::differenceSet(&result2, &set2, &set1);
 
     // Check the result of set2 - set1
@@ -476,15 +466,15 @@ void TestSet::testDifference()
     // Test edge cases
 
     // Empty set difference
-    Set<TestData, CompareTestData> empty(compareTestData);
-    Set<TestData, CompareTestData> emptyResult(compareTestData);
+    Set<TestData, CompareTestData> empty;
+    Set<TestData, CompareTestData> emptyResult;
 
     // Empty - Set = Empty
     Set<TestData, CompareTestData>::differenceSet(&emptyResult, &empty, &set1);
     QCOMPARE(emptyResult.getSize(), 0);
 
     // Set - Empty = Set
-    Set<TestData, CompareTestData> fullResult(compareTestData);
+    Set<TestData, CompareTestData> fullResult;
     Set<TestData, CompareTestData>::differenceSet(&fullResult, &set1, &empty);
 
     QCOMPARE(fullResult.getSize(), 3);
@@ -493,7 +483,7 @@ void TestSet::testDifference()
     QVERIFY(fullResult.isMember(&find3));
 
     // Set - Set = Empty
-    Set<TestData, CompareTestData> sameSetResult(compareTestData);
+    Set<TestData, CompareTestData> sameSetResult;
     Set<TestData, CompareTestData>::differenceSet(&sameSetResult, &set1, &set1);
     QCOMPARE(sameSetResult.getSize(), 0);
 }
@@ -501,9 +491,9 @@ void TestSet::testDifference()
 void TestSet::testSubset()
 {
     // Create sets
-    Set<TestData, CompareTestData> set1(compareTestData);
-    Set<TestData, CompareTestData> set2(compareTestData);
-    Set<TestData, CompareTestData> set3(compareTestData);
+    Set<TestData, CompareTestData> set1;
+    Set<TestData, CompareTestData> set2;
+    Set<TestData, CompareTestData> set3;
 
     // Create test data
     TestData *d1 = new TestData(1);
@@ -540,7 +530,7 @@ void TestSet::testSubset()
     // Test edge cases
 
     // Empty set is a subset of any set
-    Set<TestData, CompareTestData> emptySet(compareTestData);
+    Set<TestData, CompareTestData> emptySet;
     QVERIFY(TestDataSet::isSubset(&emptySet, &set1));
     QVERIFY(TestDataSet::isSubset(&emptySet, &set2));
     QVERIFY(TestDataSet::isSubset(&emptySet, &set3));
@@ -552,7 +542,7 @@ void TestSet::testSubset()
     QVERIFY(TestDataSet::isSubset(&set3, &set3));
 
     // Additional subset tests
-    Set<TestData, CompareTestData> set4(compareTestData); // Will be {1, 2} like set1
+    Set<TestData, CompareTestData> set4; // Will be {1, 2} like set1
     TestData *d1_dup3 = new TestData(1);
     TestData *d2_dup3 = new TestData(2);
     set4.insert(d1_dup3, true);
@@ -565,9 +555,9 @@ void TestSet::testSubset()
 void TestSet::testEqualSet()
 {
     // Create sets
-    Set<TestData, CompareTestData> set1(compareTestData);
-    Set<TestData, CompareTestData> set2(compareTestData);
-    Set<TestData, CompareTestData> set3(compareTestData);
+    Set<TestData, CompareTestData> set1;
+    Set<TestData, CompareTestData> set2;
+    Set<TestData, CompareTestData> set3;
 
     // Create test data for set1
     TestData *d1 = new TestData(1);
@@ -602,8 +592,8 @@ void TestSet::testEqualSet()
     // Test edge cases
 
     // Empty sets are equal to each other
-    Set<TestData, CompareTestData> empty1(compareTestData);
-    Set<TestData, CompareTestData> empty2(compareTestData);
+    Set<TestData, CompareTestData> empty1;
+    Set<TestData, CompareTestData> empty2;
     QVERIFY(TestDataSet::isEqualSet(&empty1, &empty2));
 
     // A set is equal to itself
@@ -616,7 +606,7 @@ void TestSet::testEqualSet()
     QVERIFY(!TestDataSet::isEqualSet(&set1, &empty1));
 
     // Test with different insertion order but same elements
-    Set<TestData, CompareTestData> set4(compareTestData);
+    Set<TestData, CompareTestData> set4;
     TestData *d2_dup2 = new TestData(2);
     TestData *d1_dup3 = new TestData(1);
 

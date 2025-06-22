@@ -38,18 +38,6 @@ public:
     }
 };
 
-// Comparison function for TestData vertices
-int compareTestData(const void *key1, const void *key2)
-{
-    const BfsVertex<TestData> *v1 = static_cast<const BfsVertex<TestData> *>(key1);
-    const BfsVertex<TestData> *v2 = static_cast<const BfsVertex<TestData> *>(key2);
-    if (v1 == nullptr || v2 == nullptr || v1->data == nullptr || v2->data == nullptr)
-    {
-        return 0; // Not equal if any is null
-    }
-    return (v1->data->value == v2->data->value) ? 1 : 0;
-}
-
 struct CompareTestData
 {
     bool operator()(const BfsVertex<TestData> &key1, const BfsVertex<TestData> &key2) const
@@ -81,18 +69,6 @@ struct CompareTestString
 };
 
 
-// Comparison function for string vertices
-int compareStrings(const void *key1, const void *key2)
-{
-    const BfsVertex<std::string> *v1 = static_cast<const BfsVertex<std::string> *>(key1);
-    const BfsVertex<std::string> *v2 = static_cast<const BfsVertex<std::string> *>(key2);
-    if (v1 == nullptr || v2 == nullptr || v1->data == nullptr || v2->data == nullptr)
-    {
-        return 0; // Not equal if any is null
-    }
-    return (*v1->data == *v2->data) ? 1 : 0;
-}
-
 void TestGraph::init()
 {
     // Setup code that runs before each test
@@ -106,7 +82,7 @@ void TestGraph::cleanup()
 void TestGraph::testInsertVertex()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph;
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -133,7 +109,7 @@ void TestGraph::testInsertVertex()
 void TestGraph::testInsertEdge()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph;
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -163,7 +139,7 @@ void TestGraph::testInsertEdge()
 void TestGraph::testRemoveVertex()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph;
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -205,7 +181,7 @@ void TestGraph::testRemoveVertex()
 void TestGraph::testRemoveEdge()
 {
     // Create a graph
-    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph;
 
     // Create some test vertices
     BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -251,7 +227,7 @@ void TestGraph::testOwnership()
     // Use a separate scope to test automatic cleanup
     {
         // Create a graph
-        Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
+        Graph<BfsVertex<TestData>, CompareTestData> graph;
 
         // Create vertices with graph taking ownership
         BfsVertex<TestData> *v1 = new BfsVertex<TestData>(new TestData(1));
@@ -271,7 +247,7 @@ void TestGraph::testOwnership()
     // This test passes if there's no crash or memory leak
 
     // Test without ownership
-    Graph<BfsVertex<TestData>, CompareTestData> graph(compareTestData);
+    Graph<BfsVertex<TestData>, CompareTestData> graph;
 
     // Create vertex without graph taking ownership
     BfsVertex<TestData> *v3 = new BfsVertex<TestData>(new TestData(3));
@@ -285,7 +261,7 @@ void TestGraph::testOwnership()
 void TestGraph::testBFS()
 {
     // Create a graph for BFS testing
-    Graph<BfsVertex<std::string>, CompareTestString> graph(compareStrings);
+    Graph<BfsVertex<std::string>, CompareTestString> graph;
 
     // Create vertices
     BfsVertex<std::string> *a = new BfsVertex<std::string>(new std::string("A"));
