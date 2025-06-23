@@ -63,6 +63,8 @@ void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
     }
 
     Line* line = new Line(area);
+    line->connectWidgets(from->circle, to->circle);
+
     if (needsBend) {
         // Bend: set control point perpendicular to the line, offset by the circle's radius + margin
         QPointF mid = (start + end) / 2.0;
@@ -76,12 +78,13 @@ void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
         double dist1 = QLineF(candidate1, avoidCenter).length();
         double dist2 = QLineF(candidate2, avoidCenter).length();
         QPointF control = (dist1 > dist2) ? candidate1 : candidate2;
-        line->connectWidgets(from->circle, to->circle);
-        line->setControlPoint(control); // You may need to add this method to your Line class
+        line->setControlPoint(control); // Only set control point if needed
     } else {
-        line->connectWidgets(from->circle, to->circle);
-        // Use default control point (straight line)
+        // For a straight line, set control point to the midpoint (default for quadratic Bezier)
+        QPointF mid = (start + end) / 2.0;
+        line->setControlPoint(mid);
     }
+
     line->setGeometry(0, 0, area->width(), area->height());
     line->show();
     lines.append(line);
