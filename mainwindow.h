@@ -34,6 +34,7 @@ public:
 private slots:
     void addVertex();
     void addEdge();
+    void removeEdge(); // Add this slot
     void addRectangle();
     void onVisualizationSelected(int index);
 
@@ -47,10 +48,11 @@ private:
     QComboBox* visualizationSelector;
     QWidget* visualizationArea;
     QPushButton* addCircleButton;
-    QPushButton* addVertexButton;
-    QPushButton* addEdgeButton;
-    QLineEdit* edgeFromEdit;
-    QLineEdit* edgeToEdit;
+    QPushButton* addVertexButton = nullptr;
+    QPushButton* addEdgeButton = nullptr;
+    QPushButton* removeEdgeButton = nullptr; // Add this member
+    QLineEdit* edgeFromEdit = nullptr;
+    QLineEdit* edgeToEdit = nullptr;
     QList<Rectangle*> rectangles;
     GraphVisualizer* graphVisualizer = nullptr;
 };
