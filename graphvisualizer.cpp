@@ -115,14 +115,18 @@ void GraphVisualizer::removeVertex(VisualVertex* vertex) {
 
 void GraphVisualizer::removeEdge(VisualVertex* from, VisualVertex* to) {
     if (!from || !to) return;
-    // Remove the visual line (simplest: remove all and redraw if needed)
+
+    // Only remove the line that connects 'from' and 'to'
     for (int i = lines.size() - 1; i >= 0; --i) {
         Line* line = lines[i];
-        // No direct mapping, so just remove all lines between from and to
-        // (You can improve this by storing edge info in a struct)
-        line->hide();
-        delete line;
-        lines.removeAt(i);
+        // Check if this line connects the correct widgets
+        if ((line->getStartWidget() == from->circle && line->getEndWidget() == to->circle) ||
+            (line->getStartWidget() == to->circle && line->getEndWidget() == from->circle)) {
+            line->hide();
+            delete line;
+            lines.removeAt(i);
+            break; // Remove only one matching edge
+        }
     }
     graph.removeEdge(from, &to);
 }
