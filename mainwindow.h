@@ -12,10 +12,12 @@
 #include <QRandomGenerator>
 #include <QLabel>
 #include <QFrame>
+#include <QLineEdit>
 
 #include "circle.h"
 #include "rectangle.h"
 #include "line.h"
+#include "graphvisualizer.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,7 +32,9 @@ public:
     ~MainWindow();
 
 private slots:
-    void addCircle();
+    void addVertex();
+    void addEdge();
+    void removeEdge(); // Add this slot
     void addRectangle();
     void onVisualizationSelected(int index);
 
@@ -44,8 +48,12 @@ private:
     QComboBox* visualizationSelector;
     QWidget* visualizationArea;
     QPushButton* addCircleButton;
-    QList<Circle*> circles;
+    QPushButton* addVertexButton = nullptr;
+    QPushButton* addEdgeButton = nullptr;
+    QPushButton* removeEdgeButton = nullptr; // Add this member
+    QLineEdit* edgeFromEdit = nullptr;
+    QLineEdit* edgeToEdit = nullptr;
     QList<Rectangle*> rectangles;
-    QList<Line*> lines;  // Add this line to store Line objects
+    GraphVisualizer* graphVisualizer = nullptr;
 };
 #endif // MAINWINDOW_H

@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
         connector.cpp
         line.h
         line.cpp
+        graphvisualizer.h
+        graphvisualizer.cpp
 )
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)

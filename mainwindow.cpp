@@ -49,8 +49,8 @@ MainWindow::MainWindow(QWidget *parent)
     scrollArea->setWidgetResizable(true);
     scrollArea->setWidget(visualizationArea);
     
-    // Initialize addCircleButton as nullptr (will be created in setupGraphVisualization)
-    addCircleButton = nullptr;
+    // Initialize addVertexButton as nullptr (will be created in setupGraphVisualization)
+    addVertexButton = nullptr;
     
     // Add the scroll area to the main layout
     mainLayout->addWidget(scrollArea);
@@ -65,74 +65,31 @@ MainWindow::MainWindow(QWidget *parent)
     resize(800, 600);
 }
 
-void MainWindow::addCircle()
+void MainWindow::addVertex()
 {
-    // Create a circle with a random value between 1 and 100
-    int value = QRandomGenerator::global()->bounded(1, 101);
-    Circle* circle = new Circle(value, visualizationArea);
-    
-    // Set initial position (will be adjusted to avoid overlap)
-    int maxX = visualizationArea->width() - circle->width();
-    int maxY = visualizationArea->height() - circle->height();
-    
-    // Ensure we don't position outside the visible area
-    maxX = qMax(maxX, 50);
-    maxY = qMax(maxY, 50);
-    
-    // Try up to 20 positions to find one without overlap
-    bool foundValidPosition = false;
-    for (int attempt = 0; attempt < 20; attempt++) {
-        int x = QRandomGenerator::global()->bounded(50, maxX);
-        int y = QRandomGenerator::global()->bounded(50, maxY);
-        
-        // Check if this position overlaps with existing circles
-        bool hasOverlap = false;
-        for (Circle* existingCircle : circles) {
-            int dx = existingCircle->x() - x;
-            int dy = existingCircle->y() - y;
-            int minDistance = existingCircle->width() + circle->width();
-            
-            if (dx*dx + dy*dy < minDistance*minDistance/4) {
-                hasOverlap = true;
-                break;
-            }
-        }
-        
-        if (!hasOverlap) {
-            circle->setGeometry(x, y, circle->width(), circle->height());
-            foundValidPosition = true;
-            break;
-        }
+    if (graphVisualizer) {
+        int value = QRandomGenerator::global()->bounded(1, 101);
+        graphVisualizer->addVertex(value);
     }
-    
-    // If no valid position found, just place it somewhere
-    if (!foundValidPosition) {
-        int x = QRandomGenerator::global()->bounded(50, maxX);
-        int y = QRandomGenerator::global()->bounded(50, maxY);
-        circle->setGeometry(x, y, circle->width(), circle->height());
+}
+
+void MainWindow::addEdge()
+{
+    if (!graphVisualizer) return;
+    bool ok1 = false, ok2 = false;
+    int fromVal = edgeFromEdit->text().toInt(&ok1);
+    int toVal = edgeToEdit->text().toInt(&ok2);
+    if (!ok1 || !ok2) return;
+
+    auto verts = graphVisualizer->getVertices();
+    VisualVertex* from = nullptr;
+    VisualVertex* to = nullptr;
+    for (VisualVertex* v : verts) {
+        if (v->value == fromVal) from = v;
+        if (v->value == toVal) to = v;
     }
-    
-    // Show the circle
-    circle->show();
-    
-    // Add to our vector of circles
-    circles.append(circle);
-    
-    // If we have at least 2 circles, connect the last two with a line
-    if (circles.size() >= 2) {
-        Circle* lastCircle = circles.at(circles.size() - 1);
-        Circle* prevCircle = circles.at(circles.size() - 2);
-        
-        Line* line = new Line(visualizationArea);
-        line->connectWidgets(prevCircle, lastCircle);
-        
-        // Make sure the line is drawn and visible
-        line->setGeometry(0, 0, visualizationArea->width(), visualizationArea->height());
-        line->raise(); // Bring the line to the front
-        line->show();
-        
-        // Store the line for cleanup
-        lines.append(line);
+    if (from && to) {
+        graphVisualizer->addEdge(from, to);
     }
 }
 
@@ -151,17 +108,59 @@ void MainWindow::addRectangle()
 
 void MainWindow::setupGraphVisualization()
 {
-    // Clear any previous visualization
     clearVisualization();
-    
-    // Create a button to add new circles (nodes)
-    addCircleButton = new QPushButton("Add Node", this);
-    connect(addCircleButton, &QPushButton::clicked, this, &MainWindow::addCircle);
-    
-    // Add the button to the status bar
-    ui->statusbar->addWidget(addCircleButton);
-    
-    // No more default circles - user will add them with the button
+
+    // Instantiate graphVisualizer
+    graphVisualizer = new GraphVisualizer(visualizationArea, this);
+
+    // Create widgets for adding/removing vertices and edges
+    addVertexButton = new QPushButton("Add Node", this);
+    addEdgeButton = new QPushButton("Add Edge", this);
+    removeEdgeButton = new QPushButton("Remove Edge", this); // New button
+    edgeFromEdit = new QLineEdit(this);
+    edgeToEdit = new QLineEdit(this);
+    edgeFromEdit->setPlaceholderText("From");
+    edgeToEdit->setPlaceholderText("To");
+    edgeFromEdit->setFixedWidth(50);
+    edgeToEdit->setFixedWidth(50);
+
+    // Layout for the controls
+    QWidget* controlsWidget = new QWidget(this);
+    QHBoxLayout* controlsLayout = new QHBoxLayout(controlsWidget);
+    controlsLayout->setContentsMargins(0, 0, 0, 0);
+    controlsLayout->addWidget(addVertexButton);
+    controlsLayout->addWidget(edgeFromEdit);
+    controlsLayout->addWidget(edgeToEdit);
+    controlsLayout->addWidget(addEdgeButton);
+    controlsLayout->addWidget(removeEdgeButton); // Add remove button
+
+    // Connect signals
+    connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
+    connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
+    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge); // Connect remove
+
+    // Add the controls to the status bar
+    ui->statusbar->addWidget(controlsWidget);
+}
+
+void MainWindow::removeEdge()
+{
+    if (!graphVisualizer) return;
+    bool ok1 = false, ok2 = false;
+    int fromVal = edgeFromEdit->text().toInt(&ok1);
+    int toVal = edgeToEdit->text().toInt(&ok2);
+    if (!ok1 || !ok2) return;
+
+    auto verts = graphVisualizer->getVertices();
+    VisualVertex* from = nullptr;
+    VisualVertex* to = nullptr;
+    for (VisualVertex* v : verts) {
+        if (v->value == fromVal) from = v;
+        if (v->value == toVal) to = v;
+    }
+    if (from && to) {
+        graphVisualizer->removeEdge(from, to);
+    }
 }
 
 void MainWindow::setupQueueVisualization()
@@ -193,29 +192,30 @@ void MainWindow::onVisualizationSelected(int index)
 
 void MainWindow::clearVisualization()
 {
-    // Clear all circles
-    for (Circle* circle : circles) {
-        delete circle;
+    if (graphVisualizer) {
+        graphVisualizer->clear();
+        delete graphVisualizer;
+        graphVisualizer = nullptr;
     }
-    circles.clear();
-    
+
     // Clear all rectangles
     for (Rectangle* rectangle : rectangles) {
         delete rectangle;
     }
     rectangles.clear();
-    
-    // Clear all lines
-    for (Line* line : lines) {
-        delete line;
-    }
-    lines.clear();
-    
-    // Remove add button from status bar if it exists
-    if (addCircleButton) {
-        ui->statusbar->removeWidget(addCircleButton);
-        delete addCircleButton;
-        addCircleButton = nullptr;
+
+    // Remove addVertexButton, addEdgeButton, and edits from status bar if they exist
+    if (addVertexButton) {
+        QWidget* controlsWidget = addVertexButton->parentWidget();
+        if (controlsWidget) {
+            ui->statusbar->removeWidget(controlsWidget);
+            delete controlsWidget; // deletes all children (buttons/edits)
+        }
+        addVertexButton = nullptr;
+        addEdgeButton = nullptr;
+        removeEdgeButton = nullptr;
+        edgeFromEdit = nullptr;
+        edgeToEdit = nullptr;
     }
 }
 

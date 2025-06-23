@@ -3,6 +3,9 @@
 
 #include "shape.h"
 #include <QPainter>
+#include <QPoint>
+#include <QFont>
+#include <QMouseEvent>
 
 class Circle : public Shape
 {
@@ -10,6 +13,14 @@ class Circle : public Shape
 
 private:
     int value = 0;
+    bool dragging;
+    QPoint dragOffset;
+    QPoint center;
+
+protected:
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
 
 public:
     explicit Circle(QWidget* parent = nullptr);

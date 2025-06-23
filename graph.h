@@ -43,7 +43,8 @@ public:
         for (node = this->adjacentLists.head(); node != nullptr; node = node->next()) {
             if (data != nullptr && node->data() != nullptr) {
                 if (this->equalTo(*data, *(node->data()->vertex))) {
-                    return 1;
+                    delete adjList; // Prevent memory leak
+                    return 1; // Duplicate found, do not insert
                 }
             }
         }
