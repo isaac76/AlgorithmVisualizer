@@ -19,6 +19,10 @@ set(PROJECT_SOURCES
         circle.cpp
         rectangle.h
         rectangle.cpp
+        connector.h
+        connector.cpp
+        line.h
+        line.cpp
 )
 
 if(QT_VERSION_MAJOR GREATER_EQUAL 6)
@@ -40,7 +44,6 @@ else()
     else()
         add_executable(AlgorithmVisualizer
             ${PROJECT_SOURCES}
-            rectangle.h rectangle.cpp
         )
     endif()
 endif()
