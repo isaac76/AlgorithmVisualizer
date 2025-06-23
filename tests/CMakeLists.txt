@@ -67,6 +67,8 @@ add_library(algorithm_visualizer_lib STATIC
     ${CMAKE_CURRENT_SOURCE_DIR}/../circle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../rectangle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/../shape.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../connector.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../line.cpp
 )
 target_link_libraries(algorithm_visualizer_lib PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets

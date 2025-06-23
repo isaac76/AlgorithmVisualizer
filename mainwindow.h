@@ -15,6 +15,7 @@
 
 #include "circle.h"
 #include "rectangle.h"
+#include "line.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -40,10 +41,11 @@ private:
     void updateRectanglePositions();
     
     Ui::MainWindow *ui;
-    QWidget *visualizationArea;
-    QPushButton *addCircleButton;
-    QVector<Circle*> circles;
-    QVector<Rectangle*> rectangles;
-    QComboBox *visualizationSelector;
+    QComboBox* visualizationSelector;
+    QWidget* visualizationArea;
+    QPushButton* addCircleButton;
+    QList<Circle*> circles;
+    QList<Rectangle*> rectangles;
+    QList<Line*> lines;  // Add this line to store Line objects
 };
 #endif // MAINWINDOW_H

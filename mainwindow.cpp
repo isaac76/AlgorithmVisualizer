@@ -71,11 +71,7 @@ void MainWindow::addCircle()
     int value = QRandomGenerator::global()->bounded(1, 101);
     Circle* circle = new Circle(value, visualizationArea);
     
-    // Add to our vector of circles
-    circles.append(circle);
-    
-    // Set the circle's position using absolute coordinates
-    // For demo purposes, position them randomly in the visualization area
+    // Set initial position (will be adjusted to avoid overlap)
     int maxX = visualizationArea->width() - circle->width();
     int maxY = visualizationArea->height() - circle->height();
     
@@ -83,15 +79,61 @@ void MainWindow::addCircle()
     maxX = qMax(maxX, 50);
     maxY = qMax(maxY, 50);
     
-    int x = QRandomGenerator::global()->bounded(50, maxX);
-    int y = QRandomGenerator::global()->bounded(50, maxY);
+    // Try up to 20 positions to find one without overlap
+    bool foundValidPosition = false;
+    for (int attempt = 0; attempt < 20; attempt++) {
+        int x = QRandomGenerator::global()->bounded(50, maxX);
+        int y = QRandomGenerator::global()->bounded(50, maxY);
+        
+        // Check if this position overlaps with existing circles
+        bool hasOverlap = false;
+        for (Circle* existingCircle : circles) {
+            int dx = existingCircle->x() - x;
+            int dy = existingCircle->y() - y;
+            int minDistance = existingCircle->width() + circle->width();
+            
+            if (dx*dx + dy*dy < minDistance*minDistance/4) {
+                hasOverlap = true;
+                break;
+            }
+        }
+        
+        if (!hasOverlap) {
+            circle->setGeometry(x, y, circle->width(), circle->height());
+            foundValidPosition = true;
+            break;
+        }
+    }
     
-    // Move to absolute position
-    circle->setGeometry(x, y, circle->width(), circle->height());
+    // If no valid position found, just place it somewhere
+    if (!foundValidPosition) {
+        int x = QRandomGenerator::global()->bounded(50, maxX);
+        int y = QRandomGenerator::global()->bounded(50, maxY);
+        circle->setGeometry(x, y, circle->width(), circle->height());
+    }
     
-    // Make the circle draggable (to be implemented)
-    // For now, just show it
+    // Show the circle
     circle->show();
+    
+    // Add to our vector of circles
+    circles.append(circle);
+    
+    // If we have at least 2 circles, connect the last two with a line
+    if (circles.size() >= 2) {
+        Circle* lastCircle = circles.at(circles.size() - 1);
+        Circle* prevCircle = circles.at(circles.size() - 2);
+        
+        Line* line = new Line(visualizationArea);
+        line->connectWidgets(prevCircle, lastCircle);
+        
+        // Make sure the line is drawn and visible
+        line->setGeometry(0, 0, visualizationArea->width(), visualizationArea->height());
+        line->raise(); // Bring the line to the front
+        line->show();
+        
+        // Store the line for cleanup
+        lines.append(line);
+    }
 }
 
 void MainWindow::addRectangle()
@@ -119,10 +161,7 @@ void MainWindow::setupGraphVisualization()
     // Add the button to the status bar
     ui->statusbar->addWidget(addCircleButton);
     
-    // Add initial example nodes
-    for (int i = 0; i < 5; i++) {
-        addCircle();
-    }
+    // No more default circles - user will add them with the button
 }
 
 void MainWindow::setupQueueVisualization()
@@ -165,6 +204,12 @@ void MainWindow::clearVisualization()
         delete rectangle;
     }
     rectangles.clear();
+    
+    // Clear all lines
+    for (Line* line : lines) {
+        delete line;
+    }
+    lines.clear();
     
     // Remove add button from status bar if it exists
     if (addCircleButton) {
