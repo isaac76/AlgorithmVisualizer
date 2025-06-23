@@ -113,9 +113,10 @@ void MainWindow::setupGraphVisualization()
     // Instantiate graphVisualizer
     graphVisualizer = new GraphVisualizer(visualizationArea, this);
 
-    // Create widgets for adding vertices and edges
+    // Create widgets for adding/removing vertices and edges
     addVertexButton = new QPushButton("Add Node", this);
     addEdgeButton = new QPushButton("Add Edge", this);
+    removeEdgeButton = new QPushButton("Remove Edge", this); // New button
     edgeFromEdit = new QLineEdit(this);
     edgeToEdit = new QLineEdit(this);
     edgeFromEdit->setPlaceholderText("From");
@@ -131,13 +132,35 @@ void MainWindow::setupGraphVisualization()
     controlsLayout->addWidget(edgeFromEdit);
     controlsLayout->addWidget(edgeToEdit);
     controlsLayout->addWidget(addEdgeButton);
+    controlsLayout->addWidget(removeEdgeButton); // Add remove button
 
     // Connect signals
     connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
     connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
+    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge); // Connect remove
 
     // Add the controls to the status bar
     ui->statusbar->addWidget(controlsWidget);
+}
+
+void MainWindow::removeEdge()
+{
+    if (!graphVisualizer) return;
+    bool ok1 = false, ok2 = false;
+    int fromVal = edgeFromEdit->text().toInt(&ok1);
+    int toVal = edgeToEdit->text().toInt(&ok2);
+    if (!ok1 || !ok2) return;
+
+    auto verts = graphVisualizer->getVertices();
+    VisualVertex* from = nullptr;
+    VisualVertex* to = nullptr;
+    for (VisualVertex* v : verts) {
+        if (v->value == fromVal) from = v;
+        if (v->value == toVal) to = v;
+    }
+    if (from && to) {
+        graphVisualizer->removeEdge(from, to);
+    }
 }
 
 void MainWindow::setupQueueVisualization()
@@ -183,10 +206,14 @@ void MainWindow::clearVisualization()
 
     // Remove addVertexButton, addEdgeButton, and edits from status bar if they exist
     if (addVertexButton) {
-        ui->statusbar->removeWidget(addVertexButton->parentWidget());
-        delete addVertexButton->parentWidget(); // deletes controlsWidget and all children
+        QWidget* controlsWidget = addVertexButton->parentWidget();
+        if (controlsWidget) {
+            ui->statusbar->removeWidget(controlsWidget);
+            delete controlsWidget; // deletes all children (buttons/edits)
+        }
         addVertexButton = nullptr;
         addEdgeButton = nullptr;
+        removeEdgeButton = nullptr;
         edgeFromEdit = nullptr;
         edgeToEdit = nullptr;
     }
