@@ -1,5 +1,6 @@
 #include "graphvisualizer.h"
 #include <QRandomGenerator>
+#include <QtMath>
 
 GraphVisualizer::GraphVisualizer(QWidget* area, QObject* parent)
     : QObject(parent), area(area)
@@ -21,12 +22,66 @@ VisualVertex* GraphVisualizer::addVertex(int value) {
     return v;
 }
 
-void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to) {
-    if (!from || !to) return;
+// Helper to check if a line segment (p1-p2) intersects a circle (center, radius)
+static bool lineIntersectsCircle(const QPointF& p1, const QPointF& p2, const QPointF& center, double radius) {
+    // Vector from p1 to p2
+    QPointF d = p2 - p1;
+    QPointF f = p1 - center;
+    double a = QPointF::dotProduct(d, d);
+    double b = 2 * QPointF::dotProduct(f, d);
+    double c = QPointF::dotProduct(f, f) - radius * radius;
+    double discriminant = b*b - 4*a*c;
+    if (discriminant < 0) return false;
+    discriminant = sqrt(discriminant);
+    double t1 = (-b - discriminant) / (2*a);
+    double t2 = (-b + discriminant) / (2*a);
+    return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+}
+
+void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
+{
+    if (!from || !to || !from->circle || !to->circle) return;
     if (graph.isAdjacentGraph(from, to)) return;
 
+    QPointF start = from->circle->geometry().center();
+    QPointF end = to->circle->geometry().center();
+
+    // Check for intersection with other circles
+    bool needsBend = false;
+    QPointF avoidCenter;
+    double avoidRadius = 0;
+    for (VisualVertex* v : vertices) {
+        if (v == from || v == to) continue;
+        QPointF center = v->circle->geometry().center();
+        double radius = v->circle->width() / 2.0;
+        if (lineIntersectsCircle(start, end, center, radius)) {
+            needsBend = true;
+            avoidCenter = center;
+            avoidRadius = radius;
+            break;
+        }
+    }
+
     Line* line = new Line(area);
-    line->connectWidgets(from->circle, to->circle);
+    if (needsBend) {
+        // Bend: set control point perpendicular to the line, offset by the circle's radius + margin
+        QPointF mid = (start + end) / 2.0;
+        QPointF dir = end - start;
+        QPointF perp(-dir.y(), dir.x());
+        perp /= std::hypot(perp.x(), perp.y());
+        double margin = avoidRadius + 20;
+        // Choose bend direction based on which side is farther from the avoidCenter
+        QPointF candidate1 = mid + perp * margin;
+        QPointF candidate2 = mid - perp * margin;
+        double dist1 = QLineF(candidate1, avoidCenter).length();
+        double dist2 = QLineF(candidate2, avoidCenter).length();
+        QPointF control = (dist1 > dist2) ? candidate1 : candidate2;
+        line->connectWidgets(from->circle, to->circle);
+        line->setControlPoint(control); // You may need to add this method to your Line class
+    } else {
+        line->connectWidgets(from->circle, to->circle);
+        // Use default control point (straight line)
+    }
     line->setGeometry(0, 0, area->width(), area->height());
     line->show();
     lines.append(line);
