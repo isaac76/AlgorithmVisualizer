@@ -17,6 +17,9 @@ private slots:
     void testRemove();
     void testOwnership();
     void testIteration();
+    void testEmpty();
+    void testEdgeCases();
+    void testNullOperations();
 };
 
 // Simple test data class
@@ -176,6 +179,83 @@ void TestList::testIteration()
     }
     
     QCOMPARE(sum, 6); // 1+2+3
+}
+
+void TestList::testEmpty() {
+    List<TestData> list;
+    
+    // Test empty list properties
+    QCOMPARE(list.getSize(), 0);
+    QVERIFY(list.head() == nullptr);
+    QVERIFY(list.tail() == nullptr);
+    
+    // Test removing from empty list
+    TestData* removed = nullptr;
+    list.remove(nullptr, &removed);
+    QVERIFY(removed == nullptr);
+    QCOMPARE(list.getSize(), 0);
+    
+    // Test removing with null output pointer - should not crash
+    list.remove(nullptr, nullptr);
+    QCOMPARE(list.getSize(), 0);
+    
+    // Test inserting null data
+    list.insert(nullptr, nullptr, false);
+    QCOMPARE(list.getSize(), 0);  // Size should still be 0
+}
+
+void TestList::testEdgeCases() {
+    List<TestData> list;
+    TestData* data1 = new TestData(1);
+    
+    // Insert valid data
+    list.insert(nullptr, data1, true);
+    QCOMPARE(list.getSize(), 1);
+    
+    // Try to insert at a non-existent position 
+    // This should be handled safely by inserting at head instead 
+    ListNode<TestData>* nonExistentNode = reinterpret_cast<ListNode<TestData>*>(0xDEADBEEF);
+    
+    // Try to insert at invalid position but with valid data
+    TestData* data2 = new TestData(2);
+    list.insert(nonExistentNode, data2, true);
+    
+    // Verify the list state after insertion - should have added to head
+    QCOMPARE(list.getSize(), 2);
+    QVERIFY(list.head() != nullptr);
+    
+    // Now try removing invalid node
+    TestData* removed = nullptr;
+    list.remove(nonExistentNode, &removed);
+    
+    // This should be handled safely without segfault
+    QVERIFY(list.getSize() > 0); // Size should still be positive
+}
+
+void TestList::testNullOperations() {
+    List<TestData> list;
+    
+    // Test null data operations
+    TestData* nullData = nullptr;
+    list.insert(nullptr, nullData, false);
+    QCOMPARE(list.getSize(), 0);  // Should not insert null data
+    
+    // Test null node/data removal in empty list - should not crash
+    list.remove(nullptr, nullptr);  
+    QCOMPARE(list.getSize(), 0);
+    
+    // Insert a valid node first
+    TestData* data = new TestData(5);
+    list.insert(nullptr, data, true);
+    QCOMPARE(list.getSize(), 1);
+    
+    // Then remove without caring about the output
+    list.remove(nullptr, nullptr);
+    QCOMPARE(list.getSize(), 0);
+    
+    // Try removing with null parameters on empty list
+    list.remove(nullptr, nullptr);
+    QCOMPARE(list.getSize(), 0);
 }
 
 QTEST_APPLESS_MAIN(TestList)
