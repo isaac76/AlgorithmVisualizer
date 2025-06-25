@@ -70,15 +70,20 @@ void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
         }
     }
 
+    // Check if there's already an edge in the opposite direction (to->from)
+    // If so, we need to offset both lines to avoid overlap
+    bool oppositeDirectionExists = graph.isAdjacentGraph(to, from);
+    
     Line* line = new Line(area);
     line->connectWidgets(from->circle, to->circle);
 
+    QPointF dir = end - start;
+    QPointF perp(-dir.y(), dir.x()); // Perpendicular vector
+    perp /= std::hypot(perp.x(), perp.y()); // Normalize it
+    QPointF mid = (start + end) / 2.0;
+    
     if (needsBend) {
         // Bend: set control point perpendicular to the line, offset by the circle's radius + margin
-        QPointF mid = (start + end) / 2.0;
-        QPointF dir = end - start;
-        QPointF perp(-dir.y(), dir.x());
-        perp /= std::hypot(perp.x(), perp.y());
         double margin = avoidRadius + 20;
         // Choose bend direction based on which side is farther from the avoidCenter
         QPointF candidate1 = mid + perp * margin;
@@ -86,10 +91,29 @@ void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
         double dist1 = QLineF(candidate1, avoidCenter).length();
         double dist2 = QLineF(candidate2, avoidCenter).length();
         QPointF control = (dist1 > dist2) ? candidate1 : candidate2;
-        line->setControlPoint(control); // Only set control point if needed
-    } else {
-        // For a straight line, set control point to the midpoint (default for quadratic Bezier)
-        QPointF mid = (start + end) / 2.0;
+        line->setControlPoint(control);
+    } 
+    else if (oppositeDirectionExists) {
+        // Offset this edge to one side to avoid overlap with the opposite direction
+        double offsetAmount = 15.0; // Adjust as needed for visibility
+        QPointF control = mid + perp * offsetAmount;
+        line->setControlPoint(control);
+        
+        // Also find and adjust the opposite direction line if needed
+        for (Line* existingLine : lines) {
+            if (existingLine->getStartWidget() == to->circle && 
+                existingLine->getEndWidget() == from->circle) {
+                // This is the opposite direction line
+                // Offset it to the other side
+                QPointF oppositeControl = mid - perp * offsetAmount;
+                existingLine->setControlPoint(oppositeControl);
+                existingLine->update();
+                break;
+            }
+        }
+    } 
+    else {
+        // For a standard line (no bend, no opposite direction)
         line->setControlPoint(mid);
     }
 
