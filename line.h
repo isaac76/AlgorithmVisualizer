@@ -21,6 +21,8 @@ public:
     void connectWidgets(QWidget* startWidget, QWidget* endWidget); // Remove 'override'
     void draw(QPainter* painter) override;
     void setControlPoint(const QPointF& pt) { controlPoint = pt; }
+    QWidget* getStartWidget() const { return startWidget; }
+    QWidget* getEndWidget() const { return endWidget; }
 };
 
 #endif // LINE_H
