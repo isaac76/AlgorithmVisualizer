@@ -8,6 +8,9 @@ class Shape : public QWidget
 {
     Q_OBJECT
 
+private:
+    QColor color = Qt::white;
+
 public:
     explicit Shape(QWidget *parent = nullptr);
     virtual ~Shape();
@@ -17,6 +20,8 @@ public:
     
 protected:
     void paintEvent(QPaintEvent *event) override;
+    void setColor(const QColor& color);
+    QColor getColor() const;
 };
 
 #endif // SHAPE_H

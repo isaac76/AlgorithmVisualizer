@@ -64,7 +64,7 @@ void Circle::draw(QPainter* painter) {
     // Draw the circle
     QPen ellipsePen(Qt::black, 2); // Thicker pen for better visibility
     painter->setPen(ellipsePen);
-    painter->setBrush(QBrush(Qt::white)); // Fill circle with white
+    painter->setBrush(QBrush(this->Shape::getColor()));
     painter->drawEllipse(circleRect);
     
     // Draw the value text centered in the circle

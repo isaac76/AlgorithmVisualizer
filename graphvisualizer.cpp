@@ -182,3 +182,16 @@ QPoint GraphVisualizer::findNonOverlappingPosition(int w, int h) const {
     return QPoint(QRandomGenerator::global()->bounded(50, maxX),
                   QRandomGenerator::global()->bounded(50, maxY));
 }
+
+QColor GraphVisualizer::vertexColorToQColor(VertexColor color) {
+    switch (color) {
+        case white:
+            return Qt::white;
+        case gray:
+            return Qt::gray;
+        case black:
+            return Qt::black;
+        default:
+            return Qt::white;
+    }
+}

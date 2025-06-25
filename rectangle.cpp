@@ -39,7 +39,7 @@ void Rectangle::draw(QPainter* painter) {
 
     QPen rectPen(Qt::black, 2); // Thicker pen for better visibility
     painter->setPen(rectPen);
-    painter->setBrush(QBrush(Qt::white)); // Fill rectangle with white
+    painter->setBrush(this->Shape::getColor());
     painter->drawRect(rectangle);
 
     painter->setFont(QFont("Arial", 14, QFont::Bold));

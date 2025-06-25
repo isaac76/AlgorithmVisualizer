@@ -34,9 +34,10 @@ public:
 private slots:
     void addVertex();
     void addEdge();
-    void removeEdge(); // Add this slot
+    void removeEdge();
     void addRectangle();
     void onVisualizationSelected(int index);
+    void updateStartVertexCombo(); // New slot for updating the start vertex dropdown
 
 private:
     void setupGraphVisualization();
@@ -50,9 +51,11 @@ private:
     QPushButton* addCircleButton;
     QPushButton* addVertexButton = nullptr;
     QPushButton* addEdgeButton = nullptr;
-    QPushButton* removeEdgeButton = nullptr; // Add this member
+    QPushButton* removeEdgeButton = nullptr;
+    QPushButton* bfsButton = nullptr; // New BFS button
     QLineEdit* edgeFromEdit = nullptr;
     QLineEdit* edgeToEdit = nullptr;
+    QComboBox* startVertexCombo = nullptr; // New dropdown for selecting start vertex
     QList<Rectangle*> rectangles;
     GraphVisualizer* graphVisualizer = nullptr;
 };

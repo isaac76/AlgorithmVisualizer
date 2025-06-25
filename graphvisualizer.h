@@ -8,9 +8,10 @@
 #include "graph.h"
 #include "circle.h"
 #include "line.h"
+#include "bfsvertex.h"
 
 // Simple struct to hold vertex data and its visual representation
-struct VisualVertex {
+struct VisualVertex : public BfsVertex<VisualVertex> {
     int value;
     Circle* circle;
     VisualVertex(int v, Circle* c) : value(v), circle(c) {}
@@ -47,7 +48,10 @@ public:
     // Access to all vertices and edges
     QList<VisualVertex*> getVertices() const;
     QList<Line*> getLines() const;
-
+    
+    // Utility method to convert VertexColor enum to QColor
+    static QColor vertexColorToQColor(VertexColor color);
+    
 private:
     QWidget* area;
     Graph<VisualVertex, VisualVertexCompare> graph;

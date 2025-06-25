@@ -70,6 +70,9 @@ void MainWindow::addVertex()
     if (graphVisualizer) {
         int value = QRandomGenerator::global()->bounded(1, 101);
         graphVisualizer->addVertex(value);
+        
+        // Update the start vertex dropdown
+        updateStartVertexCombo();
     }
 }
 
@@ -116,13 +119,19 @@ void MainWindow::setupGraphVisualization()
     // Create widgets for adding/removing vertices and edges
     addVertexButton = new QPushButton("Add Node", this);
     addEdgeButton = new QPushButton("Add Edge", this);
-    removeEdgeButton = new QPushButton("Remove Edge", this); // New button
+    removeEdgeButton = new QPushButton("Remove Edge", this);
+    bfsButton = new QPushButton("BFS", this); // New BFS button
     edgeFromEdit = new QLineEdit(this);
     edgeToEdit = new QLineEdit(this);
     edgeFromEdit->setPlaceholderText("From");
     edgeToEdit->setPlaceholderText("To");
     edgeFromEdit->setFixedWidth(50);
     edgeToEdit->setFixedWidth(50);
+    
+    // Create start vertex dropdown
+    startVertexCombo = new QComboBox(this);
+    startVertexCombo->setFixedWidth(70);
+    updateStartVertexCombo(); // Initialize the dropdown
 
     // Layout for the controls
     QWidget* controlsWidget = new QWidget(this);
@@ -132,12 +141,15 @@ void MainWindow::setupGraphVisualization()
     controlsLayout->addWidget(edgeFromEdit);
     controlsLayout->addWidget(edgeToEdit);
     controlsLayout->addWidget(addEdgeButton);
-    controlsLayout->addWidget(removeEdgeButton); // Add remove button
+    controlsLayout->addWidget(removeEdgeButton);
+    controlsLayout->addWidget(bfsButton); // Add BFS button
+    controlsLayout->addWidget(startVertexCombo); // Add start vertex dropdown
 
     // Connect signals
     connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
     connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
-    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge); // Connect remove
+    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge);
+    // We'll connect the BFS button later
 
     // Add the controls to the status bar
     ui->statusbar->addWidget(controlsWidget);
@@ -214,6 +226,8 @@ void MainWindow::clearVisualization()
         addVertexButton = nullptr;
         addEdgeButton = nullptr;
         removeEdgeButton = nullptr;
+        bfsButton = nullptr;
+        startVertexCombo = nullptr;
         edgeFromEdit = nullptr;
         edgeToEdit = nullptr;
     }
@@ -240,6 +254,32 @@ void MainWindow::updateRectanglePositions()
         
         // Increment y position for the next rectangle without spacing
         yPos += rect->height();
+    }
+}
+
+void MainWindow::updateStartVertexCombo()
+{
+    if (!graphVisualizer || !startVertexCombo) return;
+    
+    // Remember the current selection if possible
+    int currentIndex = startVertexCombo->currentIndex();
+    int currentValue = (currentIndex >= 0) ? startVertexCombo->currentText().toInt() : -1;
+    
+    // Clear the dropdown
+    startVertexCombo->clear();
+    
+    // Get all vertices and add them to the dropdown
+    auto vertices = graphVisualizer->getVertices();
+    for (VisualVertex* vertex : vertices) {
+        startVertexCombo->addItem(QString::number(vertex->value));
+    }
+    
+    // Try to restore the previous selection
+    if (currentValue >= 0) {
+        int index = startVertexCombo->findText(QString::number(currentValue));
+        if (index >= 0) {
+            startVertexCombo->setCurrentIndex(index);
+        }
     }
 }
 
