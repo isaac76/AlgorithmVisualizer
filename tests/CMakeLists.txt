@@ -16,6 +16,11 @@ set(TEST_LIST_SOURCES
     tst_list.cpp
 )
 
+# Queue class tests
+set(TEST_QUEUE_SOURCES
+    tst_queue.cpp
+)
+
 # Set class tests
 set(TEST_SET_SOURCES
     tst_set.cpp
@@ -43,6 +48,11 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Test Widgets)
 add_executable(tst_list ${TEST_LIST_SOURCES})
 target_link_libraries(tst_list PRIVATE Qt${QT_VERSION_MAJOR}::Test)
 add_test(NAME tst_list COMMAND tst_list)
+
+# Queue test
+add_executable(tst_queue ${TEST_QUEUE_SOURCES})
+target_link_libraries(tst_queue PRIVATE Qt${QT_VERSION_MAJOR}::Test)
+add_test(NAME tst_queue COMMAND tst_queue)
 
 # Set test
 add_executable(tst_set ${TEST_SET_SOURCES})
