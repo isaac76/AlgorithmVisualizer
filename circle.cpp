@@ -25,6 +25,17 @@ void Circle::setValue(int value)
     update(); // Trigger repaint when value changes
 }
 
+int Circle::getHopCount()
+{
+    return this->hopCount;
+}
+
+void Circle::setHopCount(int hops)
+{
+    this->hopCount = hops;
+    update(); // Trigger repaint when hop count changes
+}
+
 void Circle::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
@@ -67,8 +78,22 @@ void Circle::draw(QPainter* painter) {
     painter->setBrush(QBrush(this->Shape::getColor()));
     painter->drawEllipse(circleRect);
     
-    // Draw the value text centered in the circle
-    painter->setFont(QFont("Arial", 14, QFont::Bold));
-    painter->drawText(circleRect, Qt::AlignCenter, QString::number(this->value));
+    // Determine text color based on background color brightness
+    QColor circleColor = this->Shape::getColor();
+    QColor textColor = (circleColor.red() + circleColor.green() + circleColor.blue() < 500) ? Qt::white : Qt::black;
     
+    // Draw the value text in the top half of the circle
+    painter->setFont(QFont("Arial", 14, QFont::Bold));
+    painter->setPen(textColor);
+    QRect valueRect = circleRect;
+    valueRect.adjust(0, -10, 0, 0); // Shift slightly upward
+    painter->drawText(valueRect, Qt::AlignCenter, QString::number(this->value));
+    
+    // Draw the hop count in the bottom half, if it's been visited
+    if (this->hopCount >= 0) {
+        painter->setFont(QFont("Arial", 10, QFont::Bold));
+        QRect hopRect = circleRect;
+        hopRect.adjust(0, 20, 0, 0); // Move to bottom half
+        painter->drawText(hopRect, Qt::AlignCenter, "Hops: " + QString::number(this->hopCount));
+    }
 }

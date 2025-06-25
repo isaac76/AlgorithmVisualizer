@@ -7,32 +7,39 @@
 #include "graph.h"
 #include "bfsvertex.h"
 #include "set.h"
+#include <type_traits>
 
-template<typename T, typename Compare = std::equal_to<T>> int bfs(Graph<BfsVertex<T>, Compare>* graph, BfsVertex<T>* start, List<BfsVertex<T>>* hops) {
+template<typename T, typename Compare = std::equal_to<T>> 
+int bfs(Graph<T, Compare>* graph, 
+        T* start, 
+        List<T>* hops) {
+    // No static assertion - we allow both BfsVertex<T> directly and classes derived from BfsVertex<T>
+                  
     if (!graph || !start) {
         return -1; // Invalid parameters
     }
 
-    Queue<AdjacentList<BfsVertex<T>, Compare>> queue;
+    Queue<AdjacentList<T, Compare>> queue;
 
-    AdjacentList<BfsVertex<T>, Compare>* adjList = nullptr;
-    AdjacentList<BfsVertex<T>, Compare>* clrAdjList;
+    AdjacentList<T, Compare>* adjList = nullptr;
+    AdjacentList<T, Compare>* clrAdjList;
 
-    BfsVertex<T>* clrVertex;
-    BfsVertex<T>* adjVertex;
+    T* clrVertex;
+    T* adjVertex;
 
-    ListNode<AdjacentList<BfsVertex<T>, Compare>>* node;
+    ListNode<AdjacentList<T, Compare>>* node;
 
     // Initialize all vertices
     for (node = graph->getAdjacencyListHead(); node != nullptr; node = node->next()) {
         clrVertex = node->data()->vertex;
 
-        if (BfsVertex<T>::compare(clrVertex, start)) {
-            clrVertex->color = gray;
-            clrVertex->hops = 0;
+        // Use pointer equality for now since we can't guarantee BfsVertex<T>::compare will work with all T types
+        if (clrVertex == start) {
+            clrVertex->setColor(gray);
+            clrVertex->setHops(0);
         } else {
-            clrVertex->color = white;
-            clrVertex->hops = -1;
+            clrVertex->setColor(white);
+            clrVertex->setHops(-1);
         }
     }
 
@@ -49,15 +56,15 @@ template<typename T, typename Compare = std::equal_to<T>> int bfs(Graph<BfsVerte
 
         // Process all adjacent vertices
         for (auto member = adjList->adjacent.head(); member != nullptr; member = member->next()) {
-            adjVertex = static_cast<BfsVertex<T>*>(member->data());
+            adjVertex = static_cast<T*>(member->data());
 
             // Get the adjacent list for this vertex
             if (graph->buildAdjacentList(adjVertex, &clrAdjList) == 0) {
                 clrVertex = clrAdjList->vertex;
 
-                if (clrVertex->color == white) {
-                    clrVertex->color = gray;
-                    clrVertex->hops = adjList->vertex->hops + 1;
+                if (clrVertex->getColor() == white) {
+                    clrVertex->setColor(gray);
+                    clrVertex->setHops(adjList->vertex->getHops() + 1);
 
                     queue.enqueue(clrAdjList);
                 }
@@ -65,16 +72,16 @@ template<typename T, typename Compare = std::equal_to<T>> int bfs(Graph<BfsVerte
         }
 
         queue.dequeue(&adjList);
-        adjList->vertex->color = black;
+        adjList->vertex->setColor(black);
     }
 
     // Clear the hop list if it exists; otherwise initialize it
     if (hops == nullptr) {
         // If hops is null, create a new list
-        hops = new List<BfsVertex<T>>();
+        hops = new List<T>();
     } else {
         // If hops already exists, clear it by removing all items
-        BfsVertex<T>* temp;
+        T* temp;
         while (hops->getSize() > 0) {
             hops->remove(nullptr, &temp);
         }
@@ -84,7 +91,7 @@ template<typename T, typename Compare = std::equal_to<T>> int bfs(Graph<BfsVerte
     for (node = graph->getAdjacencyListHead(); node != nullptr; node = node->next()) {
         clrVertex = node->data()->vertex;
 
-        if (clrVertex->hops != -1) {
+        if (clrVertex->getHops() != -1) {
             hops->insert(hops->tail(), clrVertex);
         }
     }

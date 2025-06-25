@@ -121,6 +121,7 @@ void MainWindow::setupGraphVisualization()
     addEdgeButton = new QPushButton("Add Edge", this);
     removeEdgeButton = new QPushButton("Remove Edge", this);
     bfsButton = new QPushButton("BFS", this); // New BFS button
+    bfsClearButton = new QPushButton("Clear BFS", this); // New Clear BFS button
     edgeFromEdit = new QLineEdit(this);
     edgeToEdit = new QLineEdit(this);
     edgeFromEdit->setPlaceholderText("From");
@@ -132,6 +133,13 @@ void MainWindow::setupGraphVisualization()
     startVertexCombo = new QComboBox(this);
     startVertexCombo->setFixedWidth(70);
     updateStartVertexCombo(); // Initialize the dropdown
+    
+    // Create animation speed slider
+    animationSpeedSlider = new QSlider(Qt::Horizontal, this);
+    animationSpeedSlider->setRange(100, 2000); // 100ms to 2000ms
+    animationSpeedSlider->setValue(1000); // Default: 1000ms
+    animationSpeedSlider->setFixedWidth(100);
+    QLabel* speedLabel = new QLabel("Speed:", this);
 
     // Layout for the controls
     QWidget* controlsWidget = new QWidget(this);
@@ -143,13 +151,26 @@ void MainWindow::setupGraphVisualization()
     controlsLayout->addWidget(addEdgeButton);
     controlsLayout->addWidget(removeEdgeButton);
     controlsLayout->addWidget(bfsButton); // Add BFS button
+    controlsLayout->addWidget(bfsClearButton); // Add Clear BFS button
     controlsLayout->addWidget(startVertexCombo); // Add start vertex dropdown
+    controlsLayout->addWidget(new QLabel("Speed:", this));
+    controlsLayout->addWidget(animationSpeedSlider); // Add speed slider
 
+    // Create a status label for BFS messages
+    statusLabel = new QLabel("", this);
+    controlsLayout->addWidget(statusLabel);
+    
     // Connect signals
     connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
     connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
     connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge);
-    // We'll connect the BFS button later
+    connect(bfsButton, &QPushButton::clicked, this, &MainWindow::startBfs);
+    connect(bfsClearButton, &QPushButton::clicked, this, &MainWindow::clearBfs);
+    connect(animationSpeedSlider, &QSlider::valueChanged, this, &MainWindow::animationSpeedChanged);
+    
+    // Connect the graphVisualizer's BFS status signal to our slot
+    connect(graphVisualizer, &GraphVisualizer::bfsStatusMessage, 
+            this, &MainWindow::updateBfsStatus);
 
     // Add the controls to the status bar
     ui->statusbar->addWidget(controlsWidget);
@@ -230,6 +251,7 @@ void MainWindow::clearVisualization()
         startVertexCombo = nullptr;
         edgeFromEdit = nullptr;
         edgeToEdit = nullptr;
+        statusLabel = nullptr;
     }
 }
 
@@ -280,6 +302,52 @@ void MainWindow::updateStartVertexCombo()
         if (index >= 0) {
             startVertexCombo->setCurrentIndex(index);
         }
+    }
+}
+
+void MainWindow::startBfs()
+{
+    if (!graphVisualizer || startVertexCombo->count() == 0) {
+        return;
+    }
+    
+    // Get the selected start vertex value
+    bool ok = false;
+    int startValue = startVertexCombo->currentText().toInt(&ok);
+    if (!ok) {
+        return;
+    }
+    
+    // Start the BFS animation
+    graphVisualizer->startBfsAnimation(startValue);
+}
+
+void MainWindow::updateBfsStatus(const QString& message)
+{
+    if (statusLabel) {
+        statusLabel->setText(message);
+        statusLabel->setToolTip(message); // Also set as tooltip in case it's too long
+    }
+}
+
+void MainWindow::clearBfs()
+{
+    if (graphVisualizer) {
+        graphVisualizer->resetBfsColors();
+    }
+}
+
+void MainWindow::animationSpeedChanged(int value)
+{
+    if (graphVisualizer) {
+        // The slider gives higher values for slower speeds (more delay)
+        // So we need to invert it to make the slider feel natural
+        int delay = 3000 - value; // Invert the range: 100ms to 2000ms becomes 2900ms to 1000ms
+        graphVisualizer->setAnimationDelay(delay);
+        
+        // Update status to show the new speed
+        QString speedText = QString("Animation delay set to %1 ms").arg(delay);
+        updateBfsStatus(speedText);
     }
 }
 
