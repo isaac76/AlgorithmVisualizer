@@ -13,6 +13,7 @@ class Circle : public Shape
 
 private:
     int value = 0;
+    int hopCount = -1; // -1 means not visited yet
     bool dragging;
     QPoint dragOffset;
     QPoint center;
@@ -28,6 +29,14 @@ public:
 
     int getValue();
     void setValue(int value);
+    
+    int getHopCount();
+    void setHopCount(int hops);
+    
+    // Make setColor accessible for VisualVertex
+    void setColor(const QColor& color) {
+        Shape::setColor(color);
+    }
     
     void draw(QPainter* painter) override;
 };

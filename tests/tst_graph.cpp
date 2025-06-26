@@ -306,15 +306,15 @@ void TestGraph::testBFS()
         if (vertex && vertex->data)
         {
             if (*vertex->data == "A")
-                hopCounts[0] = vertex->hops;
+                hopCounts[0] = vertex->getHops();
             else if (*vertex->data == "B")
-                hopCounts[1] = vertex->hops;
+                hopCounts[1] = vertex->getHops();
             else if (*vertex->data == "C")
-                hopCounts[2] = vertex->hops;
+                hopCounts[2] = vertex->getHops();
             else if (*vertex->data == "D")
-                hopCounts[3] = vertex->hops;
+                hopCounts[3] = vertex->getHops();
             else if (*vertex->data == "E")
-                hopCounts[4] = vertex->hops;
+                hopCounts[4] = vertex->getHops();
         }
         node = node->next();
     }

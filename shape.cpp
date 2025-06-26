@@ -17,3 +17,12 @@ void Shape::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     draw(&painter);
 }
+
+void Shape::setColor(const QColor& color) {
+    this->color = color;
+    update();
+}
+
+QColor Shape::getColor() const {
+    return this->color;
+}

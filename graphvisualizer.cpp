@@ -1,13 +1,21 @@
 #include "graphvisualizer.h"
 #include <QRandomGenerator>
 #include <QtMath>
+#include <thread>
 
 GraphVisualizer::GraphVisualizer(QWidget* area, QObject* parent)
-    : QObject(parent), area(area)
+    : QObject(parent), area(area), animationStepTimer(nullptr)
 {}
 
 GraphVisualizer::~GraphVisualizer() {
     clear();
+    
+    // Delete the animation timer if it was created
+    if (animationStepTimer) {
+        animationStepTimer->stop();
+        delete animationStepTimer;
+        animationStepTimer = nullptr;
+    }
 }
 
 VisualVertex* GraphVisualizer::addVertex(int value) {
@@ -62,15 +70,20 @@ void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
         }
     }
 
+    // Check if there's already an edge in the opposite direction (to->from)
+    // If so, we need to offset both lines to avoid overlap
+    bool oppositeDirectionExists = graph.isAdjacentGraph(to, from);
+    
     Line* line = new Line(area);
     line->connectWidgets(from->circle, to->circle);
 
+    QPointF dir = end - start;
+    QPointF perp(-dir.y(), dir.x()); // Perpendicular vector
+    perp /= std::hypot(perp.x(), perp.y()); // Normalize it
+    QPointF mid = (start + end) / 2.0;
+    
     if (needsBend) {
         // Bend: set control point perpendicular to the line, offset by the circle's radius + margin
-        QPointF mid = (start + end) / 2.0;
-        QPointF dir = end - start;
-        QPointF perp(-dir.y(), dir.x());
-        perp /= std::hypot(perp.x(), perp.y());
         double margin = avoidRadius + 20;
         // Choose bend direction based on which side is farther from the avoidCenter
         QPointF candidate1 = mid + perp * margin;
@@ -78,10 +91,29 @@ void GraphVisualizer::addEdge(VisualVertex* from, VisualVertex* to)
         double dist1 = QLineF(candidate1, avoidCenter).length();
         double dist2 = QLineF(candidate2, avoidCenter).length();
         QPointF control = (dist1 > dist2) ? candidate1 : candidate2;
-        line->setControlPoint(control); // Only set control point if needed
-    } else {
-        // For a straight line, set control point to the midpoint (default for quadratic Bezier)
-        QPointF mid = (start + end) / 2.0;
+        line->setControlPoint(control);
+    } 
+    else if (oppositeDirectionExists) {
+        // Offset this edge to one side to avoid overlap with the opposite direction
+        double offsetAmount = 15.0; // Adjust as needed for visibility
+        QPointF control = mid + perp * offsetAmount;
+        line->setControlPoint(control);
+        
+        // Also find and adjust the opposite direction line if needed
+        for (Line* existingLine : lines) {
+            if (existingLine->getStartWidget() == to->circle && 
+                existingLine->getEndWidget() == from->circle) {
+                // This is the opposite direction line
+                // Offset it to the other side
+                QPointF oppositeControl = mid - perp * offsetAmount;
+                existingLine->setControlPoint(oppositeControl);
+                existingLine->update();
+                break;
+            }
+        }
+    } 
+    else {
+        // For a standard line (no bend, no opposite direction)
         line->setControlPoint(mid);
     }
 
@@ -181,4 +213,140 @@ QPoint GraphVisualizer::findNonOverlappingPosition(int w, int h) const {
     }
     return QPoint(QRandomGenerator::global()->bounded(50, maxX),
                   QRandomGenerator::global()->bounded(50, maxY));
+}
+
+// This method has been replaced with a free function in graphvisualizer.h
+
+// Add this helper method to find a vertex by value
+VisualVertex* GraphVisualizer::findVertexByValue(int value)
+{
+    for (VisualVertex* v : vertices) {
+        if (v->value == value) {
+            return v;
+        }
+    }
+    return nullptr;
+}
+
+void GraphVisualizer::startBfsAnimation(int startValue)
+{
+    // Find the start vertex
+    startVertex = findVertexByValue(startValue);
+    if (!startVertex) {
+        emit bfsStatusMessage("Start vertex not found!");
+        return;
+    }
+    
+    // Reset all vertices to initial state
+    resetBfsColors();
+    
+    // Restore the start vertex since resetBfsColors clears it
+    startVertex = findVertexByValue(startValue);
+    animationStep = Running;
+    
+    emit bfsStatusMessage("BFS Starting from vertex " + QString::number(startVertex->value));
+    
+    // Set up the animation timer if not already created
+    if (!animationStepTimer) {
+        animationStepTimer = new QTimer(this);
+        connect(animationStepTimer, &QTimer::timeout, this, &GraphVisualizer::performBfsStep);
+    }
+    
+    // Initialize BFS state
+    bfsQueue.clear();
+    exploredVertices.clear();
+    
+    // Add start vertex to the queue
+    bfsQueue.append(startVertex);
+    startVertex->setColor(gray); // Mark as discovered
+    startVertex->setHops(0);     // Distance from start is 0
+    
+    // Start the timer to process BFS steps
+    animationStepTimer->start(animationDelay);
+}
+
+void GraphVisualizer::stopBfsAnimation()
+{
+    // Stop the animation timer if it's running
+    if (animationStepTimer && animationStepTimer->isActive()) {
+        animationStepTimer->stop();
+    }
+    
+    // Reset animation state
+    animationStep = NotRunning;
+    bfsQueue.clear();
+    exploredVertices.clear();
+    
+    // Clear the start vertex pointer - NOTE: Any code calling this method needs
+    // to be aware that this clears the startVertex pointer
+    startVertex = nullptr;
+}
+
+void GraphVisualizer::performBfsStep()
+{
+    // If the queue is empty, BFS is completed
+    if (bfsQueue.isEmpty()) {
+        animationStepTimer->stop();
+        animationStep = Completed;
+        emit bfsStatusMessage("BFS completed successfully");
+        return;
+    }
+    
+    // Get the next vertex from the queue (first-in, first-out)
+    VisualVertex* currentVertex = bfsQueue.takeFirst();
+    
+    // Process this vertex - find all its adjacent vertices
+    QList<VisualVertex*> adjacentVertices;
+    
+    // Build list of adjacent vertices
+    for (VisualVertex* v : vertices) {
+        if (graph.isAdjacentGraph(currentVertex, v) && !exploredVertices.contains(v)) {
+            adjacentVertices.append(v);
+        }
+    }
+    
+    // Update status message
+    emit bfsStatusMessage("Exploring vertex " + QString::number(currentVertex->value) + 
+                         " with " + QString::number(adjacentVertices.size()) + " unvisited neighbors");
+    
+    // Process each adjacent vertex
+    for (VisualVertex* adjVertex : adjacentVertices) {
+        if (adjVertex->getColor() == white) {
+            // First discovery of this vertex
+            adjVertex->setColor(gray);
+            adjVertex->setHops(currentVertex->getHops() + 1);
+            bfsQueue.append(adjVertex);
+        }
+    }
+    
+    // Mark current vertex as completely processed
+    currentVertex->setColor(black);
+    exploredVertices.append(currentVertex);
+}
+
+void GraphVisualizer::resetBfsColors()
+{
+    // Reset all vertices to white color and -1 hops (not visited)
+    for (VisualVertex* v : vertices) {
+        if (v) {
+            v->setColor(white);
+            v->setHops(-1);
+        }
+    }
+    
+    // Reset animation state
+    stopBfsAnimation();
+    
+    // Signal that BFS has been reset
+    emit bfsStatusMessage("BFS visualization reset");
+}
+
+void GraphVisualizer::setAnimationDelay(int delay)
+{
+    animationDelay = delay;
+    
+    // If the animation timer is active, update its interval
+    if (animationStepTimer && animationStepTimer->isActive()) {
+        animationStepTimer->setInterval(delay);
+    }
 }

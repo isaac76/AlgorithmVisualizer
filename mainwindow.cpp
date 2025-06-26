@@ -70,6 +70,9 @@ void MainWindow::addVertex()
     if (graphVisualizer) {
         int value = QRandomGenerator::global()->bounded(1, 101);
         graphVisualizer->addVertex(value);
+        
+        // Update the start vertex dropdown
+        updateStartVertexCombo();
     }
 }
 
@@ -116,13 +119,27 @@ void MainWindow::setupGraphVisualization()
     // Create widgets for adding/removing vertices and edges
     addVertexButton = new QPushButton("Add Node", this);
     addEdgeButton = new QPushButton("Add Edge", this);
-    removeEdgeButton = new QPushButton("Remove Edge", this); // New button
+    removeEdgeButton = new QPushButton("Remove Edge", this);
+    bfsButton = new QPushButton("BFS", this); // New BFS button
+    bfsClearButton = new QPushButton("Clear BFS", this); // New Clear BFS button
     edgeFromEdit = new QLineEdit(this);
     edgeToEdit = new QLineEdit(this);
     edgeFromEdit->setPlaceholderText("From");
     edgeToEdit->setPlaceholderText("To");
     edgeFromEdit->setFixedWidth(50);
     edgeToEdit->setFixedWidth(50);
+    
+    // Create start vertex dropdown
+    startVertexCombo = new QComboBox(this);
+    startVertexCombo->setFixedWidth(70);
+    updateStartVertexCombo(); // Initialize the dropdown
+    
+    // Create animation speed slider
+    animationSpeedSlider = new QSlider(Qt::Horizontal, this);
+    animationSpeedSlider->setRange(100, 2000); // 100ms to 2000ms
+    animationSpeedSlider->setValue(1000); // Default: 1000ms
+    animationSpeedSlider->setFixedWidth(100);
+    QLabel* speedLabel = new QLabel("Speed:", this);
 
     // Layout for the controls
     QWidget* controlsWidget = new QWidget(this);
@@ -132,12 +149,28 @@ void MainWindow::setupGraphVisualization()
     controlsLayout->addWidget(edgeFromEdit);
     controlsLayout->addWidget(edgeToEdit);
     controlsLayout->addWidget(addEdgeButton);
-    controlsLayout->addWidget(removeEdgeButton); // Add remove button
+    controlsLayout->addWidget(removeEdgeButton);
+    controlsLayout->addWidget(bfsButton); // Add BFS button
+    controlsLayout->addWidget(bfsClearButton); // Add Clear BFS button
+    controlsLayout->addWidget(startVertexCombo); // Add start vertex dropdown
+    controlsLayout->addWidget(new QLabel("Speed:", this));
+    controlsLayout->addWidget(animationSpeedSlider); // Add speed slider
 
+    // Create a status label for BFS messages
+    statusLabel = new QLabel("", this);
+    controlsLayout->addWidget(statusLabel);
+    
     // Connect signals
     connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
     connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
-    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge); // Connect remove
+    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge);
+    connect(bfsButton, &QPushButton::clicked, this, &MainWindow::startBfs);
+    connect(bfsClearButton, &QPushButton::clicked, this, &MainWindow::clearBfs);
+    connect(animationSpeedSlider, &QSlider::valueChanged, this, &MainWindow::animationSpeedChanged);
+    
+    // Connect the graphVisualizer's BFS status signal to our slot
+    connect(graphVisualizer, &GraphVisualizer::bfsStatusMessage, 
+            this, &MainWindow::updateBfsStatus);
 
     // Add the controls to the status bar
     ui->statusbar->addWidget(controlsWidget);
@@ -214,8 +247,11 @@ void MainWindow::clearVisualization()
         addVertexButton = nullptr;
         addEdgeButton = nullptr;
         removeEdgeButton = nullptr;
+        bfsButton = nullptr;
+        startVertexCombo = nullptr;
         edgeFromEdit = nullptr;
         edgeToEdit = nullptr;
+        statusLabel = nullptr;
     }
 }
 
@@ -240,6 +276,78 @@ void MainWindow::updateRectanglePositions()
         
         // Increment y position for the next rectangle without spacing
         yPos += rect->height();
+    }
+}
+
+void MainWindow::updateStartVertexCombo()
+{
+    if (!graphVisualizer || !startVertexCombo) return;
+    
+    // Remember the current selection if possible
+    int currentIndex = startVertexCombo->currentIndex();
+    int currentValue = (currentIndex >= 0) ? startVertexCombo->currentText().toInt() : -1;
+    
+    // Clear the dropdown
+    startVertexCombo->clear();
+    
+    // Get all vertices and add them to the dropdown
+    auto vertices = graphVisualizer->getVertices();
+    for (VisualVertex* vertex : vertices) {
+        startVertexCombo->addItem(QString::number(vertex->value));
+    }
+    
+    // Try to restore the previous selection
+    if (currentValue >= 0) {
+        int index = startVertexCombo->findText(QString::number(currentValue));
+        if (index >= 0) {
+            startVertexCombo->setCurrentIndex(index);
+        }
+    }
+}
+
+void MainWindow::startBfs()
+{
+    if (!graphVisualizer || startVertexCombo->count() == 0) {
+        return;
+    }
+    
+    // Get the selected start vertex value
+    bool ok = false;
+    int startValue = startVertexCombo->currentText().toInt(&ok);
+    if (!ok) {
+        return;
+    }
+    
+    // Start the BFS animation
+    graphVisualizer->startBfsAnimation(startValue);
+}
+
+void MainWindow::updateBfsStatus(const QString& message)
+{
+    if (statusLabel) {
+        statusLabel->setText(message);
+        statusLabel->setToolTip(message); // Also set as tooltip in case it's too long
+    }
+}
+
+void MainWindow::clearBfs()
+{
+    if (graphVisualizer) {
+        graphVisualizer->resetBfsColors();
+    }
+}
+
+void MainWindow::animationSpeedChanged(int value)
+{
+    if (graphVisualizer) {
+        // The slider gives higher values for slower speeds (more delay)
+        // So we need to invert it to make the slider feel natural
+        int delay = 3000 - value; // Invert the range: 100ms to 2000ms becomes 2900ms to 1000ms
+        graphVisualizer->setAnimationDelay(delay);
+        
+        // Update status to show the new speed
+        QString speedText = QString("Animation delay set to %1 ms").arg(delay);
+        updateBfsStatus(speedText);
     }
 }
 

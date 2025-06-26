@@ -6,11 +6,37 @@ Line::Line(QWidget* parent) : Connector(parent)
 
 void Line::draw(QPainter* painter) {
     painter->setRenderHint(QPainter::Antialiasing);
+    
+    // Draw the curved path
     QPainterPath path;
     path.moveTo(this->startPoint);
     path.quadTo(this->controlPoint, this->endPoint);
     painter->setPen(QPen(Qt::black, 2));
     painter->drawPath(path);
+    
+    // Draw the arrowhead to show direction
+    // Calculate the direction vector at the end point (tangent to the curve)
+    QPointF direction = this->endPoint - this->controlPoint;
+    
+    // Normalize the direction vector manually
+    double length = std::hypot(direction.x(), direction.y());
+    if (length > 0) {
+        direction.rx() /= length;
+        direction.ry() /= length;
+        
+        // Arrow size - adjust as needed
+        double arrowSize = 10.0;
+        
+        // Calculate arrow points
+        QPointF arrowP1 = this->endPoint - direction * arrowSize + QPointF(-direction.y(), direction.x()) * 0.5 * arrowSize;
+        QPointF arrowP2 = this->endPoint - direction * arrowSize - QPointF(-direction.y(), direction.x()) * 0.5 * arrowSize;
+        
+        // Draw arrowhead
+        QPolygonF arrowHead;
+        arrowHead << this->endPoint << arrowP1 << arrowP2;
+        painter->setBrush(QBrush(Qt::black));
+        painter->drawPolygon(arrowHead);
+    }
 }
 
 void Line::connectWidgets(QWidget* startWidget, QWidget* endWidget) {

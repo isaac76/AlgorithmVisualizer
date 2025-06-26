@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QFrame>
 #include <QLineEdit>
+#include <QStatusBar>
 
 #include "circle.h"
 #include "rectangle.h"
@@ -34,9 +35,14 @@ public:
 private slots:
     void addVertex();
     void addEdge();
-    void removeEdge(); // Add this slot
+    void removeEdge();
+    void startBfs(); // New slot for BFS button
+    void clearBfs(); // New slot for Clear BFS button
+    void updateBfsStatus(const QString& message); // New slot for BFS status updates
     void addRectangle();
     void onVisualizationSelected(int index);
+    void updateStartVertexCombo(); // New slot for updating the start vertex dropdown
+    void animationSpeedChanged(int value); // New slot for animation speed slider
 
 private:
     void setupGraphVisualization();
@@ -50,9 +56,14 @@ private:
     QPushButton* addCircleButton;
     QPushButton* addVertexButton = nullptr;
     QPushButton* addEdgeButton = nullptr;
-    QPushButton* removeEdgeButton = nullptr; // Add this member
+    QPushButton* removeEdgeButton = nullptr;
+    QPushButton* bfsButton = nullptr; // New BFS button
+    QPushButton* bfsClearButton = nullptr; // New Clear BFS button
+    QSlider* animationSpeedSlider = nullptr; // Slider to control BFS animation speed
     QLineEdit* edgeFromEdit = nullptr;
     QLineEdit* edgeToEdit = nullptr;
+    QComboBox* startVertexCombo = nullptr; // New dropdown for selecting start vertex
+    QLabel* statusLabel = nullptr; // New label for BFS status messages
     QList<Rectangle*> rectangles;
     GraphVisualizer* graphVisualizer = nullptr;
 };
