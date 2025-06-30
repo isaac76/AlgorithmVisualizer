@@ -21,7 +21,7 @@ inline QColor vertexColorToQColor(VertexColor color) {
         case gray:
             return Qt::gray;
         case black:
-            return QColor(50, 50, 50); // Dark gray instead of black for better contrast
+            return Qt::black;
         default:
             return Qt::white;
     }

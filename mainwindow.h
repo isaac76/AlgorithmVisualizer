@@ -36,13 +36,14 @@ private slots:
     void addVertex();
     void addEdge();
     void removeEdge();
-    void startBfs(); // New slot for BFS button
-    void clearBfs(); // New slot for Clear BFS button
-    void updateBfsStatus(const QString& message); // New slot for BFS status updates
+    void startBfs();
+    void clearBfs();
+    void updateBfsStatus(const QString& message);
     void addRectangle();
     void onVisualizationSelected(int index);
-    void updateStartVertexCombo(); // New slot for updating the start vertex dropdown
-    void animationSpeedChanged(int value); // New slot for animation speed slider
+    void updateStartVertexCombo();
+    void updateEdgeComboBoxes();
+    void animationSpeedChanged(int value);
 
 private:
     void setupGraphVisualization();
@@ -57,13 +58,13 @@ private:
     QPushButton* addVertexButton = nullptr;
     QPushButton* addEdgeButton = nullptr;
     QPushButton* removeEdgeButton = nullptr;
-    QPushButton* bfsButton = nullptr; // New BFS button
-    QPushButton* bfsClearButton = nullptr; // New Clear BFS button
-    QSlider* animationSpeedSlider = nullptr; // Slider to control BFS animation speed
-    QLineEdit* edgeFromEdit = nullptr;
-    QLineEdit* edgeToEdit = nullptr;
-    QComboBox* startVertexCombo = nullptr; // New dropdown for selecting start vertex
-    QLabel* statusLabel = nullptr; // New label for BFS status messages
+    QPushButton* bfsButton = nullptr;
+    QPushButton* bfsClearButton = nullptr;
+    QSlider* animationSpeedSlider = nullptr;
+    QComboBox* edgeFromCombo = nullptr;
+    QComboBox* edgeToCombo = nullptr;
+    QComboBox* startVertexCombo = nullptr;
+    QLabel* statusLabel = nullptr;
     QList<Rectangle*> rectangles;
     GraphVisualizer* graphVisualizer = nullptr;
 };

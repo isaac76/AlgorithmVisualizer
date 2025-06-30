@@ -2,31 +2,39 @@
 #include <QRandomGenerator>
 #include <QtMath>
 #include <thread>
+#include <QApplication>
 
 GraphVisualizer::GraphVisualizer(QWidget* area, QObject* parent)
     : QObject(parent), area(area), animationStepTimer(nullptr)
 {}
 
 GraphVisualizer::~GraphVisualizer() {
-    clear();
-    
-    // Delete the animation timer if it was created
+    // Stop any running animations first
     if (animationStepTimer) {
         animationStepTimer->stop();
         delete animationStepTimer;
         animationStepTimer = nullptr;
     }
+    
+    // Then clear the graph and visual elements
+    clear();
 }
 
 VisualVertex* GraphVisualizer::addVertex(int value) {
+    // Create visual representation
     Circle* circle = new Circle(value, area);
     QPoint pos = findNonOverlappingPosition(circle->width(), circle->height());
     circle->setGeometry(pos.x(), pos.y(), circle->width(), circle->height());
     circle->show();
 
+    // Create the vertex object that will be tracked by both the graph and our vertices list
     VisualVertex* v = new VisualVertex(value, circle);
     vertices.append(v);
+    
+    // Insert into the graph with ownership
+    // This means the Graph will take responsibility for deleting the vertex
     graph.insertVertex(v, true);
+    
     return v;
 }
 
@@ -164,21 +172,32 @@ void GraphVisualizer::removeEdge(VisualVertex* from, VisualVertex* to) {
 }
 
 void GraphVisualizer::clear() {
+    // Use a safer approach to delete visual elements
+    // First disconnect all lines from widgets to prevent invalid references
     for (Line* line : lines) {
+        line->disconnectWidgets();
         line->hide();
-        delete line;
+        // Use deleteLater for safer widget deletion
+        line->deleteLater();
     }
     lines.clear();
+    
+    // Then handle vertices
     for (VisualVertex* v : vertices) {
         if (v->circle) {
+            // Safely hide and queue for deletion
             v->circle->hide();
-            delete v->circle;
+            v->circle->deleteLater();
+            // Clear the reference so we don't access it later
+            v->circle = nullptr;
         }
+        // Now delete the vertex object
         delete v;
     }
     vertices.clear();
-    // The graph will clean up owned vertices
-    // (if you use ownership flags in insertVertex)
+    
+    // Process any pending deletions immediately
+    QApplication::processEvents();
 }
 
 QList<VisualVertex*> GraphVisualizer::getVertices() const {
