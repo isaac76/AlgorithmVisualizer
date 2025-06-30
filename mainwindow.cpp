@@ -1,87 +1,90 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
+/***************************************************************
+ * Filename:   mainwindow.cpp
+ * Author:     IO
+ * Description:
+ *   The MainWindow class presents a user interface for choosing 
+ *   an algorithm and then adding data and visualing how the 
+ *   algorith inserts data and traverses the data structure.
+ ****************************************************************/
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     
-    // Create a central widget with a layout
+    // setup main window and menu bar
     QWidget* centralWidget = new QWidget(this);
     QVBoxLayout* mainLayout = new QVBoxLayout(centralWidget);
-    
-    // Create visualization selector in the menu bar
     QWidget* menuBarWidget = new QWidget(this);
     QHBoxLayout* menuBarLayout = new QHBoxLayout(menuBarWidget);
     menuBarLayout->setContentsMargins(10, 0, 10, 0);
     
     QLabel* selectorLabel = new QLabel("Select Visualization:", this);
     visualizationSelector = new QComboBox(this);
+    visualizationSelector->setObjectName("visualizationSelector");
     
-    // Add visualization options
     visualizationSelector->addItem("Select...");
     visualizationSelector->addItem("Graph");
     visualizationSelector->addItem("Queue");
     
-    // Connect the selector to the slot
+    // handle visualization selection
     connect(visualizationSelector, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &MainWindow::onVisualizationSelected);
     
-    // Add the selector to the menu bar widget
     menuBarLayout->addWidget(selectorLabel);
     menuBarLayout->addWidget(visualizationSelector);
     menuBarLayout->addStretch();
     
-    // Add the widget to the menu bar
     ui->menubar->setCornerWidget(menuBarWidget);
     
-    // Create a visualization area with coordinate system
     visualizationArea = new QWidget();
     visualizationArea->setMinimumHeight(400);
     visualizationArea->setStyleSheet("background-color: white;");
     
-    // Elements will be positioned absolutely within this area
     visualizationArea->setLayout(new QVBoxLayout());
     
-    // Create a scroll area for visualization
     QScrollArea* scrollArea = new QScrollArea();
     scrollArea->setWidgetResizable(true);
     scrollArea->setWidget(visualizationArea);
     
-    // Initialize addVertexButton as nullptr (will be created in setupGraphVisualization)
     addVertexButton = nullptr;
     
-    // Add the scroll area to the main layout
     mainLayout->addWidget(scrollArea);
     
-    // Set small margins for the central widget
     mainLayout->setContentsMargins(5, 5, 5, 5);
     
-    // Set the central widget
     setCentralWidget(centralWidget);
-    
-    // Set a reasonable window size
-    resize(800, 600);
 }
 
+/**
+ * @brief   adds a random number to the graph visualization
+ */
 void MainWindow::addVertex()
 {
     if (graphVisualizer) {
         int value = QRandomGenerator::global()->bounded(1, 101);
         graphVisualizer->addVertex(value);
         
-        // Update the start vertex dropdown
+        // Update all vertex combo boxes
         updateStartVertexCombo();
+        updateEdgeComboBoxes();
     }
 }
 
+/**
+ * @brief   connects two vertices
+ */
 void MainWindow::addEdge()
 {
-    if (!graphVisualizer) return;
+    if (!graphVisualizer || edgeFromCombo->count() == 0 || edgeToCombo->count() == 0) return;
+    
     bool ok1 = false, ok2 = false;
-    int fromVal = edgeFromEdit->text().toInt(&ok1);
-    int toVal = edgeToEdit->text().toInt(&ok2);
+    int fromVal = edgeFromCombo->currentText().toInt(&ok1);
+    int toVal = edgeToCombo->currentText().toInt(&ok2);
     if (!ok1 || !ok2) return;
 
     auto verts = graphVisualizer->getVertices();
@@ -98,69 +101,84 @@ void MainWindow::addEdge()
 
 void MainWindow::addRectangle()
 {
-    // Create a rectangle with a random value between 1 and 100
     int value = QRandomGenerator::global()->bounded(1, 101);
     Rectangle* rect = new Rectangle(value, visualizationArea);
     
-    // Add to our vector of rectangles
     rectangles.append(rect);
     
-    // Position all rectangles in a stack
     updateRectanglePositions();
 }
 
+/**
+ * @brief sets up the graph visualization when the user chooses graph from the 
+ *        drop down menu
+ */
 void MainWindow::setupGraphVisualization()
 {
     clearVisualization();
 
-    // Instantiate graphVisualizer
     graphVisualizer = new GraphVisualizer(visualizationArea, this);
 
-    // Create widgets for adding/removing vertices and edges
     addVertexButton = new QPushButton("Add Node", this);
     addEdgeButton = new QPushButton("Add Edge", this);
     removeEdgeButton = new QPushButton("Remove Edge", this);
     bfsButton = new QPushButton("BFS", this); // New BFS button
     bfsClearButton = new QPushButton("Clear BFS", this); // New Clear BFS button
-    edgeFromEdit = new QLineEdit(this);
-    edgeToEdit = new QLineEdit(this);
-    edgeFromEdit->setPlaceholderText("From");
-    edgeToEdit->setPlaceholderText("To");
-    edgeFromEdit->setFixedWidth(50);
-    edgeToEdit->setFixedWidth(50);
     
-    // Create start vertex dropdown
+    // Set object names for testing
+    addVertexButton->setObjectName("addVertexButton");
+    addEdgeButton->setObjectName("addEdgeButton");
+    removeEdgeButton->setObjectName("removeEdgeButton");
+    bfsButton->setObjectName("bfsButton");
+    bfsClearButton->setObjectName("bfsClearButton");
+    
+    // Replace line edits with combo boxes for vertex selection
+    edgeFromCombo = new QComboBox(this);
+    edgeToCombo = new QComboBox(this);
+    edgeFromCombo->setFixedWidth(70);
+    edgeToCombo->setFixedWidth(70);
+    
+    // Set object names for testing
+    edgeFromCombo->setObjectName("edgeFromCombo");
+    edgeToCombo->setObjectName("edgeToCombo");
+    
+    // Labels for the combo boxes
+    QLabel* fromLabel = new QLabel("From:", this);
+    QLabel* toLabel = new QLabel("To:", this);
+    
     startVertexCombo = new QComboBox(this);
     startVertexCombo->setFixedWidth(70);
-    updateStartVertexCombo(); // Initialize the dropdown
+    startVertexCombo->setObjectName("startVertexCombo");
     
-    // Create animation speed slider
+    // Initialize all combo boxes with vertex values
+    updateStartVertexCombo();
+    updateEdgeComboBoxes();
+    
     animationSpeedSlider = new QSlider(Qt::Horizontal, this);
     animationSpeedSlider->setRange(100, 2000); // 100ms to 2000ms
     animationSpeedSlider->setValue(1000); // Default: 1000ms
     animationSpeedSlider->setFixedWidth(100);
     QLabel* speedLabel = new QLabel("Speed:", this);
 
-    // Layout for the controls
     QWidget* controlsWidget = new QWidget(this);
     QHBoxLayout* controlsLayout = new QHBoxLayout(controlsWidget);
     controlsLayout->setContentsMargins(0, 0, 0, 0);
     controlsLayout->addWidget(addVertexButton);
-    controlsLayout->addWidget(edgeFromEdit);
-    controlsLayout->addWidget(edgeToEdit);
+    controlsLayout->addWidget(fromLabel);
+    controlsLayout->addWidget(edgeFromCombo);
+    controlsLayout->addWidget(toLabel);
+    controlsLayout->addWidget(edgeToCombo);
     controlsLayout->addWidget(addEdgeButton);
     controlsLayout->addWidget(removeEdgeButton);
-    controlsLayout->addWidget(bfsButton); // Add BFS button
-    controlsLayout->addWidget(bfsClearButton); // Add Clear BFS button
-    controlsLayout->addWidget(startVertexCombo); // Add start vertex dropdown
+    controlsLayout->addWidget(bfsButton);
+    controlsLayout->addWidget(bfsClearButton);
+    controlsLayout->addWidget(startVertexCombo);
     controlsLayout->addWidget(new QLabel("Speed:", this));
-    controlsLayout->addWidget(animationSpeedSlider); // Add speed slider
+    controlsLayout->addWidget(animationSpeedSlider);
 
-    // Create a status label for BFS messages
     statusLabel = new QLabel("", this);
     controlsLayout->addWidget(statusLabel);
     
-    // Connect signals
     connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
     connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
     connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge);
@@ -168,20 +186,22 @@ void MainWindow::setupGraphVisualization()
     connect(bfsClearButton, &QPushButton::clicked, this, &MainWindow::clearBfs);
     connect(animationSpeedSlider, &QSlider::valueChanged, this, &MainWindow::animationSpeedChanged);
     
-    // Connect the graphVisualizer's BFS status signal to our slot
     connect(graphVisualizer, &GraphVisualizer::bfsStatusMessage, 
             this, &MainWindow::updateBfsStatus);
 
-    // Add the controls to the status bar
     ui->statusbar->addWidget(controlsWidget);
 }
 
+/**
+ * @brief removes a connection between two vertices
+ */
 void MainWindow::removeEdge()
 {
-    if (!graphVisualizer) return;
+    if (!graphVisualizer || edgeFromCombo->count() == 0 || edgeToCombo->count() == 0) return;
+    
     bool ok1 = false, ok2 = false;
-    int fromVal = edgeFromEdit->text().toInt(&ok1);
-    int toVal = edgeToEdit->text().toInt(&ok2);
+    int fromVal = edgeFromCombo->currentText().toInt(&ok1);
+    int toVal = edgeToCombo->currentText().toInt(&ok2);
     if (!ok1 || !ok2) return;
 
     auto verts = graphVisualizer->getVertices();
@@ -205,19 +225,21 @@ void MainWindow::setupQueueVisualization()
     }
 }
 
+/**
+ * @brief handles user ineraction with the visualization drop down
+ */
 void MainWindow::onVisualizationSelected(int index)
 {
     // Clear previous visualization first
     clearVisualization();
     
     switch (index) {
-        case 0: // "Select..."
-            // Just keep the area clear
+        case 0:
             break;
-        case 1: // "Graph"
+        case 1:
             setupGraphVisualization();
             break;
-        case 2: // "Queue"
+        case 2:
             setupQueueVisualization();
             break;
     }
@@ -231,13 +253,11 @@ void MainWindow::clearVisualization()
         graphVisualizer = nullptr;
     }
 
-    // Clear all rectangles
     for (Rectangle* rectangle : rectangles) {
         delete rectangle;
     }
     rectangles.clear();
 
-    // Remove addVertexButton, addEdgeButton, and edits from status bar if they exist
     if (addVertexButton) {
         QWidget* controlsWidget = addVertexButton->parentWidget();
         if (controlsWidget) {
@@ -249,32 +269,25 @@ void MainWindow::clearVisualization()
         removeEdgeButton = nullptr;
         bfsButton = nullptr;
         startVertexCombo = nullptr;
-        edgeFromEdit = nullptr;
-        edgeToEdit = nullptr;
+        edgeFromCombo = nullptr;
+        edgeToCombo = nullptr;
         statusLabel = nullptr;
     }
 }
 
 void MainWindow::updateRectanglePositions()
 {
-    // Start position for the first rectangle (near the top with some margin)
     int yPos = 30;
     
-    // Center all rectangles horizontally in the visualization area
     for (Rectangle* rect : rectangles) {
-        // Calculate centered position
         int xPos = (visualizationArea->width() - rect->width()) / 2;
         
-        // Ensure position is valid
         xPos = qMax(xPos, 20);
         
-        // Set the rectangle's position
         rect->setGeometry(xPos, yPos, rect->width(), rect->height());
         
-        // Make sure the rectangle is visible
         rect->show();
         
-        // Increment y position for the next rectangle without spacing
         yPos += rect->height();
     }
 }
@@ -283,24 +296,66 @@ void MainWindow::updateStartVertexCombo()
 {
     if (!graphVisualizer || !startVertexCombo) return;
     
-    // Remember the current selection if possible
     int currentIndex = startVertexCombo->currentIndex();
     int currentValue = (currentIndex >= 0) ? startVertexCombo->currentText().toInt() : -1;
     
-    // Clear the dropdown
     startVertexCombo->clear();
     
-    // Get all vertices and add them to the dropdown
     auto vertices = graphVisualizer->getVertices();
     for (VisualVertex* vertex : vertices) {
         startVertexCombo->addItem(QString::number(vertex->value));
     }
     
-    // Try to restore the previous selection
     if (currentValue >= 0) {
         int index = startVertexCombo->findText(QString::number(currentValue));
         if (index >= 0) {
             startVertexCombo->setCurrentIndex(index);
+        }
+    }
+}
+
+void MainWindow::updateEdgeComboBoxes()
+{
+    if (!graphVisualizer || !edgeFromCombo || !edgeToCombo) return;
+    
+    // Remember selected values if possible
+    int currentFromValue = -1;
+    int currentToValue = -1;
+    
+    if (edgeFromCombo->currentIndex() >= 0) {
+        bool ok = false;
+        currentFromValue = edgeFromCombo->currentText().toInt(&ok);
+        if (!ok) currentFromValue = -1;
+    }
+    
+    if (edgeToCombo->currentIndex() >= 0) {
+        bool ok = false;
+        currentToValue = edgeToCombo->currentText().toInt(&ok);
+        if (!ok) currentToValue = -1;
+    }
+    
+    // Clear and refill the combo boxes
+    edgeFromCombo->clear();
+    edgeToCombo->clear();
+    
+    auto vertices = graphVisualizer->getVertices();
+    for (VisualVertex* vertex : vertices) {
+        edgeFromCombo->addItem(QString::number(vertex->value));
+        edgeToCombo->addItem(QString::number(vertex->value));
+    }
+    
+    // Restore selected values if they still exist
+    if (currentFromValue >= 0) {
+        int index = edgeFromCombo->findText(QString::number(currentFromValue));
+        if (index >= 0) {
+            edgeFromCombo->setCurrentIndex(index);
+        }
+    }
+    
+    if (currentToValue >= 0) {
+        int index = edgeToCombo->findText(QString::number(currentToValue));
+        if (index >= 0) {
+            edgeToCombo->setCurrentIndex(index);
         }
     }
 }
@@ -311,14 +366,12 @@ void MainWindow::startBfs()
         return;
     }
     
-    // Get the selected start vertex value
     bool ok = false;
     int startValue = startVertexCombo->currentText().toInt(&ok);
     if (!ok) {
         return;
     }
     
-    // Start the BFS animation
     graphVisualizer->startBfsAnimation(startValue);
 }
 
@@ -340,12 +393,9 @@ void MainWindow::clearBfs()
 void MainWindow::animationSpeedChanged(int value)
 {
     if (graphVisualizer) {
-        // The slider gives higher values for slower speeds (more delay)
-        // So we need to invert it to make the slider feel natural
         int delay = 3000 - value; // Invert the range: 100ms to 2000ms becomes 2900ms to 1000ms
         graphVisualizer->setAnimationDelay(delay);
         
-        // Update status to show the new speed
         QString speedText = QString("Animation delay set to %1 ms").arg(delay);
         updateBfsStatus(speedText);
     }
@@ -355,4 +405,3 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-

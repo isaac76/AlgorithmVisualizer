@@ -19,6 +19,7 @@ private:
 public:
     explicit Line(QWidget* parent = nullptr);
     void connectWidgets(QWidget* startWidget, QWidget* endWidget); // Remove 'override'
+    void disconnectWidgets() { startWidget = nullptr; endWidget = nullptr; }
     void draw(QPainter* painter) override;
     void setControlPoint(const QPointF& pt) { controlPoint = pt; }
     QWidget* getStartWidget() const { return startWidget; }
