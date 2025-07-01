@@ -2,6 +2,7 @@
 
 Circle::Circle(QWidget* parent) : Shape(parent)
 {
+    qDebug() << "Circle constructor called";
 }
 
 Circle::Circle(int value, QWidget* parent) : Shape(parent)

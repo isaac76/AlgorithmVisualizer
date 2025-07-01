@@ -186,8 +186,13 @@ public:
     ListNode<C>* tail() const {
         return this->t;
     }
-    // Note: takeOwnership, releaseOwnership, and hasOwnership methods
-    // are inherited from the Collection base class
+    
+    void clear() {
+        C* data;
+        while (this->size > 0) {
+            remove(nullptr, &data);
+        }
+    }
 };
 
 #endif // LIST_H

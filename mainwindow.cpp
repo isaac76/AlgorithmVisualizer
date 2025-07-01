@@ -155,8 +155,8 @@ void MainWindow::setupGraphVisualization()
     updateEdgeComboBoxes();
     
     animationSpeedSlider = new QSlider(Qt::Horizontal, this);
-    animationSpeedSlider->setRange(100, 2000); // 100ms to 2000ms
-    animationSpeedSlider->setValue(1000); // Default: 1000ms
+    animationSpeedSlider->setRange(100, 2000); // Will be converted to 500-50ms delay
+    animationSpeedSlider->setValue(1000); // Default: ~300ms delay
     animationSpeedSlider->setFixedWidth(100);
     QLabel* speedLabel = new QLabel("Speed:", this);
 
@@ -176,9 +176,6 @@ void MainWindow::setupGraphVisualization()
     controlsLayout->addWidget(new QLabel("Speed:", this));
     controlsLayout->addWidget(animationSpeedSlider);
 
-    statusLabel = new QLabel("", this);
-    controlsLayout->addWidget(statusLabel);
-    
     connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
     connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
     connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge);
@@ -186,9 +183,6 @@ void MainWindow::setupGraphVisualization()
     connect(bfsClearButton, &QPushButton::clicked, this, &MainWindow::clearBfs);
     connect(animationSpeedSlider, &QSlider::valueChanged, this, &MainWindow::animationSpeedChanged);
     
-    connect(graphVisualizer, &GraphVisualizer::bfsStatusMessage, 
-            this, &MainWindow::updateBfsStatus);
-
     ui->statusbar->addWidget(controlsWidget);
 }
 
@@ -248,7 +242,6 @@ void MainWindow::onVisualizationSelected(int index)
 void MainWindow::clearVisualization()
 {
     if (graphVisualizer) {
-        graphVisualizer->clear();
         delete graphVisualizer;
         graphVisualizer = nullptr;
     }
@@ -271,7 +264,6 @@ void MainWindow::clearVisualization()
         startVertexCombo = nullptr;
         edgeFromCombo = nullptr;
         edgeToCombo = nullptr;
-        statusLabel = nullptr;
     }
 }
 
@@ -375,14 +367,6 @@ void MainWindow::startBfs()
     graphVisualizer->startBfsAnimation(startValue);
 }
 
-void MainWindow::updateBfsStatus(const QString& message)
-{
-    if (statusLabel) {
-        statusLabel->setText(message);
-        statusLabel->setToolTip(message); // Also set as tooltip in case it's too long
-    }
-}
-
 void MainWindow::clearBfs()
 {
     if (graphVisualizer) {
@@ -393,15 +377,17 @@ void MainWindow::clearBfs()
 void MainWindow::animationSpeedChanged(int value)
 {
     if (graphVisualizer) {
-        int delay = 3000 - value; // Invert the range: 100ms to 2000ms becomes 2900ms to 1000ms
+        // Convert slider value (100-2000) to a delay (500-50ms)
+        // Higher slider values = faster animation = lower delay
+        int delay = 550 - (value / 4);
         graphVisualizer->setAnimationDelay(delay);
         
-        QString speedText = QString("Animation delay set to %1 ms").arg(delay);
-        updateBfsStatus(speedText);
+        QString speedText = QString("Animation speed: %1ms delay").arg(delay);
     }
 }
 
 MainWindow::~MainWindow()
 {
+    clearVisualization();
     delete ui;
 }

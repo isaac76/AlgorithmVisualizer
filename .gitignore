@@ -60,7 +60,13 @@ install/
 
 # IDE files
 .idea/
-.vscode/
+# VS Code files - include configuration but exclude user settings
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+# Vim swap files
 *.swp
 *.swo
 *~

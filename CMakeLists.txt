@@ -46,6 +46,8 @@ else()
     else()
         add_executable(AlgorithmVisualizer
             ${PROJECT_SOURCES}
+            dfs.h dfs.cpp
+            dfsvertex.h dfsvertex.cpp
         )
     endif()
 endif()

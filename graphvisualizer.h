@@ -27,19 +27,31 @@ inline QColor vertexColorToQColor(VertexColor color) {
     }
 }
 
+class VisualVertexNotifier : public QObject {
+    Q_OBJECT
+signals:
+    void colorChanged(VertexColor newColor);
+    void hopsChanged(int newHops);
+};
+
 // Class to hold vertex data and its visual representation
 class VisualVertex : public BfsVertex<VisualVertex> {
 public:
     int value;
     Circle* circle;
+    VisualVertexNotifier notifier;
     
-    VisualVertex(int v, Circle* c) : value(v), circle(c) {}
-    
+    VisualVertex(int v, Circle* c) : value(v), circle(c) {
+        setColor(white);
+        setHops(-1);
+    }
+
     // Override setColor to update the visual representation
     void setColor(VertexColor newColor) override {
         BfsVertex<VisualVertex>::setColor(newColor);
         if (circle) {
             circle->setColor(vertexColorToQColor(newColor));
+            emit notifier.colorChanged(newColor);
         }
     }
     
@@ -48,6 +60,7 @@ public:
         BfsVertex<VisualVertex>::setHops(newHops);
         if (circle) {
             circle->setHopCount(newHops);
+            emit notifier.hopsChanged(newHops);
         }
     }
 };
@@ -98,10 +111,13 @@ public:
     // Set the animation delay in milliseconds
     void setAnimationDelay(int delay);
 
-signals:
-    // Signal to update status message during animation
-    void bfsStatusMessage(const QString& message);
-
+private slots:
+    // Handle vertex color change
+    void onVertexColorChanged(VertexColor newColor);
+    
+    // Handle vertex hop count change
+    void onVertexHopChanged(int newHops);
+    
 private:
     QWidget* area;
     Graph<VisualVertex, VisualVertexCompare> graph;
@@ -120,14 +136,7 @@ private:
     VisualVertex* startVertex = nullptr;
     int animationDelay = 1000; // milliseconds between steps
     
-    // For step-by-step BFS animation
-    QTimer* animationStepTimer;
-    QList<VisualVertex*> bfsQueue; // Queue for BFS processing
-    QList<VisualVertex*> exploredVertices; // List of explored vertices
-    
     QPoint findNonOverlappingPosition(int w, int h) const;
-    void performBfsStep();
-    void updateVertexVisuals();
     VisualVertex* findVertexByValue(int value);
 };
 
