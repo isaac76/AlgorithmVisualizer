@@ -13,7 +13,6 @@ template<typename T, typename Compare = std::equal_to<T>>
 int bfs(Graph<T, Compare>* graph, 
         T* start, 
         List<T>& hops) {
-    // No static assertion - we allow both BfsVertex<T> directly and classes derived from BfsVertex<T>
                   
     if (!graph || !start) {
         return -1; // Invalid parameters
@@ -33,7 +32,6 @@ int bfs(Graph<T, Compare>* graph,
     for (node = graph->getAdjacencyListHead(); node != nullptr; node = node->next()) {
         clrVertex = node->data()->vertex;
 
-        // Use pointer equality for now since we can't guarantee BfsVertex<T>::compare will work with all T types
         if (clrVertex == start) {
             clrVertex->setColor(gray);
             clrVertex->setHops(0);

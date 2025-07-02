@@ -1,8 +1,11 @@
 #include <QtTest/QtTest>
 #include <string>
+#include "../list.h"
 #include "../graph.h"
 #include "../bfs.h"
+#include "../dfs.h"
 #include "../bfsvertex.h"
+#include "../dfsvertex.h"
 
 class TestGraph : public QObject
 {
@@ -22,6 +25,7 @@ private slots:
     void testRemoveEdge();
     void testOwnership();
     void testBFS();
+    void testDFS();
 };
 
 // Simple test data class
@@ -56,6 +60,21 @@ struct CompareTestData
 struct CompareTestString
 {
     bool operator()(const BfsVertex<std::string> &key1, const BfsVertex<std::string> &key2) const
+    {
+        // Check for null data pointers first
+        if (key1.data == nullptr || key2.data == nullptr)
+        {
+            return false; // Not equal if any data is null
+        }
+        
+        // Compare the string values (not the pointers)
+        return *key1.data == *key2.data;
+    }
+};
+
+struct CompareTestString2
+{
+    bool operator()(const DfsVertex<std::string> &key1, const DfsVertex<std::string> &key2) const
     {
         // Check for null data pointers first
         if (key1.data == nullptr || key2.data == nullptr)
@@ -325,6 +344,148 @@ void TestGraph::testBFS()
     QCOMPARE(hopCounts[2], 2); // C is 2 hops from A (via B)
     QCOMPARE(hopCounts[3], 1); // D is 1 hop from A
     QCOMPARE(hopCounts[4], 2); // E is 2 hops from A (via D)
+}
+
+void TestGraph::testDFS()
+{
+    // Create a graph for DFS testing
+    // This represents course prerequisites in a CS/MA curriculum
+    Graph<DfsVertex<std::string>, CompareTestString2> graph;
+
+    // Create vertices representing courses
+    DfsVertex<std::string> *cs100 = new DfsVertex<std::string>(new std::string("CS100"));
+    DfsVertex<std::string> *cs150 = new DfsVertex<std::string>(new std::string("CS150"));
+    DfsVertex<std::string> *cs200 = new DfsVertex<std::string>(new std::string("CS200"));
+    DfsVertex<std::string> *cs300 = new DfsVertex<std::string>(new std::string("CS300"));
+    DfsVertex<std::string> *ma100 = new DfsVertex<std::string>(new std::string("MA100"));
+    DfsVertex<std::string> *ma200 = new DfsVertex<std::string>(new std::string("MA200"));
+    DfsVertex<std::string> *ma300 = new DfsVertex<std::string>(new std::string("MA300"));
+
+    // Insert all vertices into the graph first with ownership transfer
+    graph.insertVertex(cs100, true);
+    graph.insertVertex(cs150, true);
+    graph.insertVertex(cs200, true);
+    graph.insertVertex(cs300, true);
+    graph.insertVertex(ma100, true);
+    graph.insertVertex(ma200, true);
+    graph.insertVertex(ma300, true);
+
+    // Verify vertex count
+    QCOMPARE(graph.getVertexCount(), 7);
+    
+    // Create edges representing prerequisites
+    // Course dependency graph:
+    //
+    //      CS100 --> CS200 --> CS300
+    //                     ^      |
+    //                     |      v
+    //      CS150         MA100 --> MA200 --> MA300
+    //                       \________^
+    //
+    // Each arrow represents "is a prerequisite for"
+    
+    graph.insertEdge(cs100, cs200); // CS100 is prerequisite for CS200
+    graph.insertEdge(cs200, cs300); // CS200 is prerequisite for CS300
+    graph.insertEdge(ma100, cs300); // MA100 is prerequisite for CS300
+    graph.insertEdge(ma100, ma200); // MA100 is prerequisite for MA200
+    graph.insertEdge(cs300, ma300); // CS300 is prerequisite for MA300
+    graph.insertEdge(ma200, ma300); // MA200 is prerequisite for MA300
+    
+    // CS150 has no prerequisites and is not a prerequisite for any other course
+    
+    // Verify edge count
+    QCOMPARE(graph.getEdgeCount(), 6);
+
+    // Before DFS, ensure all vertices are white (unvisited)
+    QCOMPARE(cs100->getColor(), white);
+    QCOMPARE(cs150->getColor(), white);
+    QCOMPARE(cs200->getColor(), white);
+    QCOMPARE(cs300->getColor(), white);
+    QCOMPARE(ma100->getColor(), white);
+    QCOMPARE(ma200->getColor(), white);
+    QCOMPARE(ma300->getColor(), white);
+
+    // Create a list to store the ordered vertices after DFS
+    List<DfsVertex<std::string>, CompareTestString2> ordered;
+
+    // Run DFS algorithm
+    QCOMPARE(dfs(&graph, ordered), 0);
+    
+    // After DFS, all vertices should be black (fully processed)
+    QCOMPARE(cs100->getColor(), black);
+    QCOMPARE(cs150->getColor(), black);
+    QCOMPARE(cs200->getColor(), black);
+    QCOMPARE(cs300->getColor(), black);
+    QCOMPARE(ma100->getColor(), black);
+    QCOMPARE(ma200->getColor(), black);
+    QCOMPARE(ma300->getColor(), black);
+    
+    // The ordered list should contain all vertices
+    QCOMPARE(ordered.getSize(), 7);
+    
+    // Convert ordered list to an array for easier verification
+    DfsVertex<std::string> *orderedVertices[7];
+    int i = 0;
+    ListNode<DfsVertex<std::string>> *node = ordered.head();
+    
+    qInfo() << "DFS Topological Sort (courses ordered so prerequisites come first):";
+    
+    // Collect vertices in the order they were processed by DFS
+    while (node != nullptr && i < 7) {
+        orderedVertices[i] = node->data();
+        qInfo() << "  Result #" << i << ": " << orderedVertices[i]->data->c_str();
+        i++;
+        node = node->next();
+    }
+    
+    qInfo() << "This topological sort shows a valid course sequence where prerequisites";
+    qInfo() << "are taken before the courses that depend on them.";
+    qInfo() << "Notice that:";
+    qInfo() << "  1. MA300 always comes last (requires both CS300 and MA200)";
+    qInfo() << "  2. CS300 always comes before MA300 but after CS200 and MA100";
+    qInfo() << "  3. CS150 can appear anywhere (no dependencies)";
+    qInfo() << "Different runs might produce different valid topological sorts.";
+    
+    // In a topological sort (which DFS can produce), each vertex must appear
+    // after all its prerequisites have been processed.
+    // Verify the properties we expect from our dependency graph:
+    
+    // Find indices of each vertex in the result array
+    int indexMap[7] = {-1, -1, -1, -1, -1, -1, -1};
+    
+    for (i = 0; i < 7; i++) {
+        if (orderedVertices[i]->data == nullptr) continue;
+        
+        if (*orderedVertices[i]->data == "CS100") indexMap[0] = i;
+        else if (*orderedVertices[i]->data == "CS150") indexMap[1] = i;
+        else if (*orderedVertices[i]->data == "CS200") indexMap[2] = i;
+        else if (*orderedVertices[i]->data == "CS300") indexMap[3] = i;
+        else if (*orderedVertices[i]->data == "MA100") indexMap[4] = i;
+        else if (*orderedVertices[i]->data == "MA200") indexMap[5] = i;
+        else if (*orderedVertices[i]->data == "MA300") indexMap[6] = i;
+    }
+    
+    // Validate that all vertices were found in the output
+    for (i = 0; i < 7; i++) {
+        QVERIFY(indexMap[i] != -1);
+    }
+    
+    // Verify topological ordering constraints
+    // MA300 must come after both CS300 and MA200
+    QVERIFY(indexMap[6] > indexMap[3]); // MA300 after CS300
+    QVERIFY(indexMap[6] > indexMap[5]); // MA300 after MA200
+    
+    // CS300 must come after both CS200 and MA100
+    QVERIFY(indexMap[3] > indexMap[2]); // CS300 after CS200
+    QVERIFY(indexMap[3] > indexMap[4]); // CS300 after MA100
+    
+    // CS200 must come after CS100
+    QVERIFY(indexMap[2] > indexMap[0]); // CS200 after CS100
+    
+    // MA200 must come after MA100
+    QVERIFY(indexMap[5] > indexMap[4]); // MA200 after MA100
+    
+    // CS150 doesn't have dependencies, so no constraints to check
 }
 
 QTEST_APPLESS_MAIN(TestGraph)

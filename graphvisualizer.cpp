@@ -326,7 +326,7 @@ void GraphVisualizer::resetBfsColors()
 void GraphVisualizer::setAnimationDelay(int delay)
 {
     // Ensure delay is reasonable (between 10ms and 2000ms)
-    animationDelay = qBound(10, delay, 2000);
+    animationDelay = qBound(10, delay, 500);
 }
 
 void GraphVisualizer::onVertexColorChanged(VertexColor newColor)

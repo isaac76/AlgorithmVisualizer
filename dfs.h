@@ -6,15 +6,16 @@
 #include "dfsvertex.h"
 #include "list.h"
 #include "listnode.h"
+#include "setnode.h"
 #include "adjacentlist.h"
 #include "graph.h"
 
 template<typename T, typename Compare = std::equal_to<T>>
 int dfsMain(Graph<T, Compare>* graph, AdjacentList<T, Compare>* adjList, List<T, Compare>* ordered) {
     AdjacentList<T, Compare>* clrAdjList;
-    DfsVertex<T>* clrVertex;
-    DfsVertex<T>* adjVertex;
-    ListNode<T>* member;
+    T* clrVertex;
+    T* adjVertex;
+    SetNode<T>* member;
 
     adjList->vertex->setColor(gray);
 
@@ -41,9 +42,9 @@ int dfsMain(Graph<T, Compare>* graph, AdjacentList<T, Compare>* adjList, List<T,
 
 template<typename T, typename Compare = std::equal_to<T>>
 int dfs(Graph<T, Compare>* graph, List<T, Compare>& ordered) {
-    DfsVertex<T>* vertex;
+    T* vertex;
 
-    ListNode<T>* node;
+    ListNode<AdjacentList<T, Compare>>* node;
 
     for (node = graph->getAdjacencyListHead();node != nullptr;node = node->next()) {
         vertex = node->data()->vertex;

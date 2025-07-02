@@ -381,8 +381,6 @@ void MainWindow::animationSpeedChanged(int value)
         // Higher slider values = faster animation = lower delay
         int delay = 550 - (value / 4);
         graphVisualizer->setAnimationDelay(delay);
-        
-        QString speedText = QString("Animation speed: %1ms delay").arg(delay);
     }
 }
 
