@@ -38,7 +38,6 @@ private slots:
     void removeEdge();
     void startBfs();
     void clearBfs();
-    void updateBfsStatus(const QString& message);
     void addRectangle();
     void onVisualizationSelected(int index);
     void updateStartVertexCombo();
@@ -64,7 +63,6 @@ private:
     QComboBox* edgeFromCombo = nullptr;
     QComboBox* edgeToCombo = nullptr;
     QComboBox* startVertexCombo = nullptr;
-    QLabel* statusLabel = nullptr;
     QList<Rectangle*> rectangles;
     GraphVisualizer* graphVisualizer = nullptr;
 };

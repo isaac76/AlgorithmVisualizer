@@ -12,7 +12,7 @@
 template<typename T, typename Compare = std::equal_to<T>> 
 int bfs(Graph<T, Compare>* graph, 
         T* start, 
-        List<T>* hops) {
+        List<T>& hops) {
     // No static assertion - we allow both BfsVertex<T> directly and classes derived from BfsVertex<T>
                   
     if (!graph || !start) {
@@ -75,24 +75,14 @@ int bfs(Graph<T, Compare>* graph,
         adjList->vertex->setColor(black);
     }
 
-    // Clear the hop list if it exists; otherwise initialize it
-    if (hops == nullptr) {
-        // If hops is null, create a new list
-        hops = new List<T>();
-    } else {
-        // If hops already exists, clear it by removing all items
-        T* temp;
-        while (hops->getSize() > 0) {
-            hops->remove(nullptr, &temp);
-        }
-    }
+    hops.clear();
 
     // Add all reachable vertices to the hop list
     for (node = graph->getAdjacencyListHead(); node != nullptr; node = node->next()) {
         clrVertex = node->data()->vertex;
 
         if (clrVertex->getHops() != -1) {
-            hops->insert(hops->tail(), clrVertex);
+            hops.insert(hops.tail(), clrVertex);
         }
     }
 

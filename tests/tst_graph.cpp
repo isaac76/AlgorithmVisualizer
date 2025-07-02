@@ -290,7 +290,7 @@ void TestGraph::testBFS()
     List<BfsVertex<std::string>> hops;
 
     // Run BFS starting from vertex A
-    QCOMPARE(bfs(&graph, a, &hops), 0);
+    QCOMPARE(bfs(&graph, a, hops), 0);
 
     // Verify all vertices were reached
     QCOMPARE(hops.getSize(), 5);

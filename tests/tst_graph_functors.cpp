@@ -227,7 +227,7 @@ void TestGraphFunctors::testCustomFunctors()
         
         // Run BFS
         List<BfsVertex<ComplexData>> hops;
-        QCOMPARE(bfs(&graph, v1, &hops), 0);
+        QCOMPARE(bfs(&graph, v1, hops), 0);
         
         // Verify all vertices were reached
         QCOMPARE(hops.getSize(), 5);
