@@ -123,7 +123,6 @@ private:
     Graph<VisualVertex, VisualVertexCompare> graph;
     QList<VisualVertex*> vertices;
     QList<Line*> lines;
-    QTimer* animationTimer = nullptr;
     
     // BFS animation state
     enum BfsAnimationStep {
@@ -134,7 +133,7 @@ private:
     
     BfsAnimationStep animationStep = NotRunning;
     VisualVertex* startVertex = nullptr;
-    int animationDelay = 1000; // milliseconds between steps
+    int animationDelay = 200; // milliseconds between steps
     
     QPoint findNonOverlappingPosition(int w, int h) const;
     VisualVertex* findVertexByValue(int value);
