@@ -4,14 +4,39 @@
 #include <thread>
 #include <QApplication>
 #include <QThread>
+#include <QDebug>
 
 GraphVisualizer::GraphVisualizer(QWidget* area, QObject* parent)
     : QObject(parent), area(area)
-{}
+{
+    // Create the DFS order label at initialization
+    dfsOrderLabel = new QLabel(area->parentWidget());
+    dfsOrderLabel->setAlignment(Qt::AlignRight | Qt::AlignTop);
+    dfsOrderLabel->setStyleSheet("background-color: white; border: 1px solid black; padding: 4px;");
+    dfsOrderLabel->setFixedWidth(220);  // Wider to fit the explanation
+    dfsOrderLabel->setWordWrap(true);   // Enable word wrap for longer explanations
+    
+    // Position the label on the right side of the parent to avoid overlap with graph
+    QSize parentSize = area->parentWidget()->size();
+    dfsOrderLabel->setGeometry(parentSize.width() - 230, 10, 220, 300);
+    
+    // Set default content
+    dfsOrderLabel->setText("<b>DFS Order:</b><br>(No DFS run yet)");
+    dfsOrderLabel->hide();
+}
 
 GraphVisualizer::~GraphVisualizer() {
     // Stop any running animations
     stopBfsAnimation();
+    stopDfsAnimation();
+    
+    // Clean up DFS order label
+    if (dfsOrderLabel) {
+        dfsOrderLabel->hide();
+        dfsOrderLabel->setParent(nullptr);
+        dfsOrderLabel->deleteLater();
+        dfsOrderLabel = nullptr;
+    }
     
     // Clean up
     clear();
@@ -349,6 +374,181 @@ void GraphVisualizer::onVertexHopChanged(int newHops)
         QApplication::processEvents();
         
         // Add a delay for animation
-        QThread::msleep(animationDelay); // Use full delay for hop changes
+        QThread::msleep(animationDelay);
+    }
+}
+
+// Custom DfsVertex that adds the vertex value to the ordered list
+class DfsVisualVertex : public DfsVertex<VisualVertex> {
+public:
+    QList<int>* orderedList;
+    
+    DfsVisualVertex(VisualVertex* v, QList<int>* list)
+        : DfsVertex<VisualVertex>(v), orderedList(list) {}
+        
+    void setColor(VertexColor newColor) override {
+        DfsVertex<VisualVertex>::setColor(newColor);
+        
+        // When a vertex is colored black (processed), add to the ordered list
+        if (newColor == black && data && orderedList) {
+            orderedList->append(data->value);
+        }
+        
+        // Update the visual representation
+        if (data) {
+            data->setColor(newColor);
+        }
+    }
+};
+
+// Custom compare for DfsVisualVertex
+struct DfsVisualVertexCompare {
+    bool operator()(const DfsVisualVertex& a, const DfsVisualVertex& b) const {
+        if (!a.data || !b.data) return false;
+        return a.data->value == b.data->value;
+    }
+};
+
+void GraphVisualizer::startDfsAnimation()
+{
+    // Reset any previous DFS state
+    resetDfsColors();
+    
+    // Clear the ordered list
+    dfsOrderedList.clear();
+    
+    // Set up DFS animation state
+    dfsAnimationStep = DfsRunning;
+    
+    // Create a Graph with DfsVisualVertex wrappers
+    Graph<DfsVisualVertex, DfsVisualVertexCompare> dfsGraph;
+    
+    // Create a map to keep track of the wrapper vertices
+    QMap<int, DfsVisualVertex*> dfsVertices;
+    
+    // Create DfsVisualVertex wrappers for each VisualVertex
+    for (VisualVertex* v : vertices) {
+        DfsVisualVertex* dfsVertex = new DfsVisualVertex(v, &dfsOrderedList);
+        dfsVertices[v->value] = dfsVertex;
+        dfsGraph.insertVertex(dfsVertex, true);
+    }
+    
+    // Create edges in the DFS graph matching the original graph
+    for (VisualVertex* from : vertices) {
+        for (VisualVertex* to : vertices) {
+            if (graph.isAdjacentGraph(from, to)) {
+                dfsGraph.insertEdge(dfsVertices[from->value], dfsVertices[to->value]);
+            }
+        }
+    }
+    
+    // Create a list to store the ordered vertices
+    List<DfsVisualVertex, DfsVisualVertexCompare> ordered;
+    
+    // Run the DFS algorithm - this will automatically update colors
+    // through calls to setColor on each DfsVisualVertex
+    int result = dfs(&dfsGraph, ordered);
+    
+    if (result != 0) {
+        // If DFS failed, reset and return
+        resetDfsColors();
+        return;
+    }
+    
+    // We can verify that ordered List and dfsOrderedList contain the same vertices in the same order
+    // by comparing them (for debugging/educational purposes)
+    bool listsMatch = true;
+    if (dfsOrderedList.size() == ordered.getSize()) {
+        ListNode<DfsVisualVertex>* node = ordered.head();
+        int i = 0;
+        while (node != nullptr) {
+            if (node->data() && node->data()->data && 
+                node->data()->data->value != dfsOrderedList[i]) {
+                listsMatch = false;
+                break;
+            }
+            node = node->next();
+            i++;
+        }
+    } else {
+        listsMatch = false;
+    }
+    
+    qDebug() << "DFS Lists match:" << listsMatch;
+    
+    // Update the label to show the ordered list
+    // (Label is created in the constructor and always visible)
+    
+    // Update the label with the ordered list
+    QString orderText = "<b>DFS Order:</b><br>";
+    orderText += "<i>(Topological sort - reading from bottom to top)</i><br><br>";
+    
+    // Display in reverse order for proper topological sort
+    // A topological sort means: if there's an edge from A to B, A comes before B
+    for (int i = dfsOrderedList.size() - 1; i >= 0; --i) {
+        orderText += QString("%1. Value %2<br>").arg(dfsOrderedList.size() - i).arg(dfsOrderedList[i]);
+    }
+    
+    orderText += "<br><i>Note: In a topological sort, for each edge from A to B,<br>"
+                 "A must come before B in the ordering.</i>";
+                 
+    dfsOrderLabel->setText(orderText);
+    dfsOrderLabel->adjustSize();
+    
+    // Signal completion
+    dfsAnimationStep = DfsCompleted;
+}
+
+void GraphVisualizer::stopDfsAnimation()
+{
+    // Reset animation state
+    dfsAnimationStep = DfsNotRunning;
+    
+    // Update the label content
+    if (dfsOrderLabel) {
+        dfsOrderLabel->setText("<b>DFS Order:</b><br>(DFS stopped)");
+    }
+}
+
+void GraphVisualizer::resetDfsColors()
+{
+    // Reset all vertices to white color
+    for (VisualVertex* v : vertices) {
+        if (v) {
+            v->setColor(white);
+        }
+    }
+    
+    // Clear the ordered list
+    dfsOrderedList.clear();
+    
+    // Update the label content
+    if (dfsOrderLabel) {
+        dfsOrderLabel->setText("<b>DFS Order:</b><br>(Reset - No DFS run yet)");
+    }
+    
+    // Reset animation state
+    stopDfsAnimation();
+}
+
+void GraphVisualizer::repositionDfsLabel()
+{
+    if (dfsOrderLabel && area && area->parentWidget()) {
+        QSize parentSize = area->parentWidget()->size();
+        dfsOrderLabel->setGeometry(parentSize.width() - 230, 10, 220, 300);
+    }
+}
+
+void GraphVisualizer::showDfsLabel()
+{
+    if (dfsOrderLabel) {
+        dfsOrderLabel->show();
+    }
+}
+
+void GraphVisualizer::hideDfsLabel()
+{
+    if (dfsOrderLabel) {
+        dfsOrderLabel->hide();
     }
 }

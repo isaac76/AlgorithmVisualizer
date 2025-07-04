@@ -7,11 +7,15 @@
 #include <QMap>
 #include <QTimer>
 #include <QColor>
+#include <QLabel>
+#include <QVBoxLayout>
 #include "graph.h"
 #include "circle.h"
 #include "line.h"
 #include "bfsvertex.h"
 #include "bfs.h"
+#include "dfsvertex.h"
+#include "dfs.h"
 
 // Utility function to convert VertexColor enum to QColor
 inline QColor vertexColorToQColor(VertexColor color) {
@@ -97,8 +101,6 @@ public:
     QList<VisualVertex*> getVertices() const;
     QList<Line*> getLines() const;
     
-    // No need for this anymore - using free function instead
-    
     // Start BFS animation from the given start vertex
     void startBfsAnimation(int startValue);
     
@@ -108,8 +110,26 @@ public:
     // Reset all vertices to their initial state (white color, -1 hops)
     void resetBfsColors();
     
+    // Start DFS animation
+    void startDfsAnimation();
+    
+    // Stop any ongoing DFS animation
+    void stopDfsAnimation();
+    
+    // Reset all vertices to their initial state for DFS (white color)
+    void resetDfsColors();
+    
     // Set the animation delay in milliseconds
     void setAnimationDelay(int delay);
+    
+    // Reposition the DFS order label (call this when parent widget is resized)
+    void repositionDfsLabel();
+    
+    // Show the DFS order label
+    void showDfsLabel();
+    
+    // Hide the DFS order label
+    void hideDfsLabel();
 
 private slots:
     // Handle vertex color change
@@ -134,6 +154,17 @@ private:
     BfsAnimationStep animationStep = NotRunning;
     VisualVertex* startVertex = nullptr;
     int animationDelay = 200; // milliseconds between steps
+    
+    // DFS animation state
+    enum DfsAnimationStep {
+        DfsNotRunning,
+        DfsRunning,
+        DfsCompleted
+    };
+    
+    DfsAnimationStep dfsAnimationStep = DfsNotRunning;
+    QList<int> dfsOrderedList; // To store the order of DFS visit completion
+    QLabel* dfsOrderLabel = nullptr; // To display the ordered list
     
     QPoint findNonOverlappingPosition(int w, int h) const;
     VisualVertex* findVertexByValue(int value);

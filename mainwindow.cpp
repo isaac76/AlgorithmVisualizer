@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include <QDebug>
+#include <QResizeEvent>
 
 /***************************************************************
  * Filename:   mainwindow.cpp
@@ -28,7 +30,8 @@ MainWindow::MainWindow(QWidget *parent)
     visualizationSelector->setObjectName("visualizationSelector");
     
     visualizationSelector->addItem("Select...");
-    visualizationSelector->addItem("Graph");
+    visualizationSelector->addItem("BFS");
+    visualizationSelector->addItem("DFS");
     visualizationSelector->addItem("Queue");
     
     // handle visualization selection
@@ -118,6 +121,7 @@ void MainWindow::setupGraphVisualization()
     clearVisualization();
 
     graphVisualizer = new GraphVisualizer(visualizationArea, this);
+    graphVisualizer->hideDfsLabel();  // Hide DFS label for BFS visualization
 
     addVertexButton = new QPushButton("Add Node", this);
     addEdgeButton = new QPushButton("Add Edge", this);
@@ -186,6 +190,75 @@ void MainWindow::setupGraphVisualization()
     ui->statusbar->addWidget(controlsWidget);
 }
 
+void MainWindow::setupGraphVisualization2()
+{
+    clearVisualization();
+
+    graphVisualizer = new GraphVisualizer(visualizationArea, this);
+    graphVisualizer->showDfsLabel();  // Show DFS label for DFS visualization
+
+    addVertexButton = new QPushButton("Add Node", this);
+    addEdgeButton = new QPushButton("Add Edge", this);
+    removeEdgeButton = new QPushButton("Remove Edge", this);
+    dfsButton = new QPushButton("DFS", this);
+    dfsClearButton = new QPushButton("Clear DFS", this);
+    
+    // Set object names for testing
+    addVertexButton->setObjectName("addVertexButton");
+    addEdgeButton->setObjectName("addEdgeButton");
+    removeEdgeButton->setObjectName("removeEdgeButton");
+    dfsButton->setObjectName("dfsButton");
+    dfsClearButton->setObjectName("dfsClearButton");
+    
+    // Replace line edits with combo boxes for vertex selection
+    edgeFromCombo = new QComboBox(this);
+    edgeToCombo = new QComboBox(this);
+    edgeFromCombo->setFixedWidth(70);
+    edgeToCombo->setFixedWidth(70);
+    
+    // Set object names for testing
+    edgeFromCombo->setObjectName("edgeFromCombo");
+    edgeToCombo->setObjectName("edgeToCombo");
+    
+    // Labels for the combo boxes
+    QLabel* fromLabel = new QLabel("From:", this);
+    QLabel* toLabel = new QLabel("To:", this);
+    
+    // For DFS, we don't need a start vertex combo since DFS processes all vertices
+    
+    // Initialize edge combo boxes with vertex values
+    updateEdgeComboBoxes();
+    
+    animationSpeedSlider = new QSlider(Qt::Horizontal, this);
+    animationSpeedSlider->setRange(100, 2000); // Will be converted to 500-50ms delay
+    animationSpeedSlider->setValue(1000); // Default: ~300ms delay
+    animationSpeedSlider->setFixedWidth(100);
+
+    QWidget* controlsWidget = new QWidget(this);
+    QHBoxLayout* controlsLayout = new QHBoxLayout(controlsWidget);
+    controlsLayout->setContentsMargins(0, 0, 0, 0);
+    controlsLayout->addWidget(addVertexButton);
+    controlsLayout->addWidget(fromLabel);
+    controlsLayout->addWidget(edgeFromCombo);
+    controlsLayout->addWidget(toLabel);
+    controlsLayout->addWidget(edgeToCombo);
+    controlsLayout->addWidget(addEdgeButton);
+    controlsLayout->addWidget(removeEdgeButton);
+    controlsLayout->addWidget(dfsButton);
+    controlsLayout->addWidget(dfsClearButton);
+    controlsLayout->addWidget(new QLabel("Speed:", this));
+    controlsLayout->addWidget(animationSpeedSlider);
+
+    connect(addVertexButton, &QPushButton::clicked, this, &MainWindow::addVertex);
+    connect(addEdgeButton, &QPushButton::clicked, this, &MainWindow::addEdge);
+    connect(removeEdgeButton, &QPushButton::clicked, this, &MainWindow::removeEdge);
+    connect(dfsButton, &QPushButton::clicked, this, &MainWindow::startDfs);
+    connect(dfsClearButton, &QPushButton::clicked, this, &MainWindow::clearDfs);
+    connect(animationSpeedSlider, &QSlider::valueChanged, this, &MainWindow::animationSpeedChanged);
+    
+    ui->statusbar->addWidget(controlsWidget);
+}
+
 /**
  * @brief removes a connection between two vertices
  */
@@ -234,6 +307,9 @@ void MainWindow::onVisualizationSelected(int index)
             setupGraphVisualization();
             break;
         case 2:
+            setupGraphVisualization2();
+            break;
+        case 3:
             setupQueueVisualization();
             break;
     }
@@ -261,6 +337,9 @@ void MainWindow::clearVisualization()
         addEdgeButton = nullptr;
         removeEdgeButton = nullptr;
         bfsButton = nullptr;
+        bfsClearButton = nullptr;
+        dfsButton = nullptr;
+        dfsClearButton = nullptr;
         startVertexCombo = nullptr;
         edgeFromCombo = nullptr;
         edgeToCombo = nullptr;
@@ -381,6 +460,35 @@ void MainWindow::animationSpeedChanged(int value)
         // Higher slider values = faster animation = lower delay
         int delay = 550 - (value / 4);
         graphVisualizer->setAnimationDelay(delay);
+    }
+}
+
+void MainWindow::startDfs()
+{
+    if (!graphVisualizer) {
+        return;
+    }
+    
+    // Start the DFS animation
+    // DFS visits all vertices regardless of starting point
+    graphVisualizer->startDfsAnimation();
+}
+
+void MainWindow::clearDfs()
+{
+    if (graphVisualizer) {
+        // Reset the DFS visualization
+        graphVisualizer->resetDfsColors();
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    
+    // Reposition the DFS label whenever the window is resized
+    if (graphVisualizer) {
+        graphVisualizer->repositionDfsLabel();
     }
 }
 
