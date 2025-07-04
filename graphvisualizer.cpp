@@ -357,7 +357,7 @@ void GraphVisualizer::setAnimationDelay(int delay)
 void GraphVisualizer::onVertexColorChanged(VertexColor newColor)
 {
     // When vertex color changes, update the UI and add a delay for animation
-    if (animationStep == Running) {
+    if (animationStep == Running || dfsAnimationStep == DfsRunning) {
         // Process events to update UI
         QApplication::processEvents();
         
