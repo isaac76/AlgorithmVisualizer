@@ -64,10 +64,10 @@ void TestMainWindow::testVisualizationSelector()
     QCOMPARE(visualizationSelector->currentIndex(), 0);
     QCOMPARE(visualizationSelector->currentText(), QString("Select..."));
     
-    // Select Graph visualization
+    // Select BFS visualization
     visualizationSelector->setCurrentIndex(1);
     QCOMPARE(visualizationSelector->currentIndex(), 1);
-    QCOMPARE(visualizationSelector->currentText(), QString("Graph"));
+    QCOMPARE(visualizationSelector->currentText(), QString("BFS"));
     
     // Allow events to be processed (visualization change happens asynchronously)
     QTest::qWait(100);
@@ -80,18 +80,29 @@ void TestMainWindow::testVisualizationSelector()
     QComboBox* edgeToCombo = window.findChild<QComboBox*>("edgeToCombo");
     
     // Verify some graph UI elements are present
-    QVERIFY2(window.findChild<QPushButton*>(), "No buttons found after selecting Graph visualization");
+    QVERIFY2(window.findChild<QPushButton*>(), "No buttons found after selecting BFS visualization");
     
-    // Select Queue visualization
+    // Select DFS visualization
     visualizationSelector->setCurrentIndex(2);
     QCOMPARE(visualizationSelector->currentIndex(), 2);
+    QCOMPARE(visualizationSelector->currentText(), QString("DFS"));
+    
+    // Allow events to be processed (visualization change happens asynchronously)
+    QTest::qWait(100);
+    
+    // Verify DFS UI elements are present (since DFS now uses similar UI components)
+    QVERIFY2(window.findChild<QPushButton*>("dfsButton") != nullptr, 
+             "DFS button not found after switching to DFS visualization");
+    
+    // Now switch to Queue visualization
+    visualizationSelector->setCurrentIndex(3);
+    QCOMPARE(visualizationSelector->currentIndex(), 3);
     QCOMPARE(visualizationSelector->currentText(), QString("Queue"));
     
     // Allow events to be processed (visualization change happens asynchronously)
     QTest::qWait(100);
     
-    // Verify queue elements (should have rectangles)
-    // We can't check for specific UI elements easily, but we can verify the previous graph elements are gone
+    // Verify graph UI elements are gone
     QVERIFY2(window.findChild<QPushButton*>("addVertexButton") == nullptr, 
              "Graph elements still present after switching to Queue visualization");
     
@@ -113,9 +124,9 @@ void TestMainWindow::testGraphUIElements()
     QComboBox* visualizationSelector = window.findChild<QComboBox*>("visualizationSelector");
     QVERIFY2(visualizationSelector != nullptr, "Could not find visualization selector combo box");
     
-    // Select Graph visualization
+    // Select BFS visualization
     visualizationSelector->setCurrentIndex(1);
-    QCOMPARE(visualizationSelector->currentText(), QString("Graph"));
+    QCOMPARE(visualizationSelector->currentText(), QString("BFS"));
     
     // Process events to allow UI to update
     QApplication::processEvents();
@@ -148,9 +159,9 @@ void TestMainWindow::testAddVertex()
     QComboBox* visualizationSelector = window.findChild<QComboBox*>("visualizationSelector");
     QVERIFY2(visualizationSelector != nullptr, "Could not find visualization selector combo box");
     
-    // Select Graph visualization
+    // Select BFS visualization
     visualizationSelector->setCurrentIndex(1);
-    QCOMPARE(visualizationSelector->currentText(), QString("Graph"));
+    QCOMPARE(visualizationSelector->currentText(), QString("BFS"));
     
     // Process events to allow UI to update
     QApplication::processEvents();
@@ -202,9 +213,9 @@ void TestMainWindow::testAddEdge()
     QComboBox* visualizationSelector = window.findChild<QComboBox*>("visualizationSelector");
     QVERIFY2(visualizationSelector != nullptr, "Could not find visualization selector combo box");
     
-    // Select Graph visualization
+    // Select BFS visualization
     visualizationSelector->setCurrentIndex(1);
-    QCOMPARE(visualizationSelector->currentText(), QString("Graph"));
+    QCOMPARE(visualizationSelector->currentText(), QString("BFS"));
     
     // Process events to allow UI to update
     QApplication::processEvents();

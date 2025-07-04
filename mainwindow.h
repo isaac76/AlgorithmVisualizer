@@ -32,12 +32,18 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    // Override resizeEvent to handle window resizing
+    void resizeEvent(QResizeEvent* event) override;
+
 private slots:
     void addVertex();
     void addEdge();
     void removeEdge();
     void startBfs();
     void clearBfs();
+    void startDfs();  // New slot for starting DFS algorithm
+    void clearDfs();  // New slot for clearing DFS visualization
     void addRectangle();
     void onVisualizationSelected(int index);
     void updateStartVertexCombo();
@@ -46,6 +52,7 @@ private slots:
 
 private:
     void setupGraphVisualization();
+    void setupGraphVisualization2();
     void setupQueueVisualization();
     void clearVisualization();
     void updateRectanglePositions();
@@ -59,6 +66,8 @@ private:
     QPushButton* removeEdgeButton = nullptr;
     QPushButton* bfsButton = nullptr;
     QPushButton* bfsClearButton = nullptr;
+    QPushButton* dfsButton = nullptr;         // New button for starting DFS
+    QPushButton* dfsClearButton = nullptr;    // New button for clearing DFS
     QSlider* animationSpeedSlider = nullptr;
     QComboBox* edgeFromCombo = nullptr;
     QComboBox* edgeToCombo = nullptr;
